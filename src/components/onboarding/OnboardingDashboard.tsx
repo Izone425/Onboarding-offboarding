@@ -346,6 +346,79 @@ const allTasksData = [
     assignedTo: "HR Coordinator",
     stage: "Pre-Onboarding" as const,
     company: "fingertech"
+  },
+  // Tasks specifically assigned to Sarah Ahmad (HR Admin)
+  {
+    id: 18,
+    task: "Review Aina's Onboarding Progress",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-17",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "HR Admin",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 19,
+    task: "Approve Harith's Leave Request",
+    assignee: "Harith Rahman",
+    due: "2025-09-23",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "HR Admin",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 20,
+    task: "Schedule Performance Review Meeting",
+    assignee: "Nur Iman",
+    due: "2025-10-03",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "HR Admin",
+    stage: "Next Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 21,
+    task: "Update Employee Handbook",
+    assignee: "All New Hires",
+    due: "2025-09-20",
+    type: "Information/Document",
+    indicator: "Onboarding",
+    status: "overdue" as const,
+    assignedTo: "HR Admin",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 22,
+    task: "Verify Siti's Training Completion",
+    assignee: "Siti Aminah",
+    due: "2025-09-23",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "HR Admin",
+    stage: "Next Day-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 23,
+    task: "Process Amir's Benefits Enrollment",
+    assignee: "Amir Hamzah",
+    due: "2025-09-27",
+    type: "Information/Document",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "HR Admin",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
   }
 ];
 
