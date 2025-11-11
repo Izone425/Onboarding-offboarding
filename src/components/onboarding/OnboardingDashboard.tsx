@@ -1,0 +1,1048 @@
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { StatCard } from "../ui/stat-card";
+import { StatusChip } from "../ui/status-chip";
+import { Button } from "../ui/button";
+import { Progress } from "../ui/progress";
+import { Badge } from "../ui/badge";
+import { Checkbox } from "../ui/checkbox";
+import {
+  TrendingUp,
+  FileText,
+  AlertTriangle,
+  Users,
+  Filter,
+  Eye,
+  CheckCircle,
+  Clock,
+  Calendar,
+  ClipboardList,
+  Building2,
+  ChevronDown
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+
+const companies = [
+  { id: "timetec-cloud", name: "TimeTec Cloud" },
+  { id: "timetec-computing", name: "TimeTec Computing" },
+  { id: "fingertech", name: "FingerTec" },
+];
+
+// Company-specific new hires data
+const allNewHires = [
+  // TimeTec Cloud employees
+  {
+    id: 1,
+    name: "Aina Zulkifli",
+    manager: "Farah Kassim",
+    startDate: "2025-09-15",
+    completedTasks: 8,
+    totalTasks: 12,
+    progress: 67,
+    status: "in-progress" as const,
+    currentStage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 2,
+    name: "Harith Rahman",
+    manager: "Nizam Salleh",
+    startDate: "2025-09-22",
+    completedTasks: 3,
+    totalTasks: 12,
+    progress: 25,
+    status: "not-started" as const,
+    currentStage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 3,
+    name: "Nur Iman",
+    manager: "Ahmed Fauzi",
+    startDate: "2025-10-01",
+    completedTasks: 1,
+    totalTasks: 12,
+    progress: 8,
+    status: "not-started" as const,
+    currentStage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  // TimeTec Computing employees
+  {
+    id: 4,
+    name: "Siti Aminah",
+    manager: "Razak Hassan",
+    startDate: "2025-09-18",
+    completedTasks: 10,
+    totalTasks: 12,
+    progress: 83,
+    status: "in-progress" as const,
+    currentStage: "Next Day-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 5,
+    name: "Amir Hamzah",
+    manager: "Lina Wong",
+    startDate: "2025-09-25",
+    completedTasks: 5,
+    totalTasks: 12,
+    progress: 42,
+    status: "in-progress" as const,
+    currentStage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  // FingerTec employees
+  {
+    id: 6,
+    name: "Daniel Lee",
+    manager: "Jason Tan",
+    startDate: "2025-09-20",
+    completedTasks: 6,
+    totalTasks: 12,
+    progress: 50,
+    status: "in-progress" as const,
+    currentStage: "1st Day-Onboarding" as const,
+    company: "fingertech"
+  },
+  {
+    id: 7,
+    name: "Sarah Ibrahim",
+    manager: "Kamala Devi",
+    startDate: "2025-10-05",
+    completedTasks: 2,
+    totalTasks: 12,
+    progress: 17,
+    status: "not-started" as const,
+    currentStage: "Pre-Onboarding" as const,
+    company: "fingertech"
+  }
+];
+
+// Company-specific tasks data
+const allTasksData = [
+  // TimeTec Cloud tasks
+  {
+    id: 1,
+    task: "Welcome Pack",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-16",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "HR Coordinator",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 2,
+    task: "Grant Email & HRMS Access",
+    assignee: "Harith Rahman",
+    due: "2025-09-24",
+    type: "System/Access",
+    indicator: "Onboarding",
+    status: "overdue" as const,
+    assignedTo: "IT/PIC",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 3,
+    task: "Day 1 Orientation",
+    assignee: "Nur Iman",
+    due: "2025-10-01",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Manager",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 4,
+    task: "Setup Workstation",
+    assignee: "Harith Rahman",
+    due: "2025-09-23",
+    type: "Asset",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "IT/PIC",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 5,
+    task: "Document Collection",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-17",
+    type: "Information/Document",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "Staff",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 6,
+    task: "Verify Identity Documents",
+    assignee: "Harith Rahman",
+    due: "2025-09-25",
+    type: "Information/Document",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "Staff",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 7,
+    task: "Process Employment Forms",
+    assignee: "Nur Iman",
+    due: "2025-10-02",
+    type: "Information/Document",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Staff",
+    stage: "Next Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 8,
+    task: "Office Tour & Badge Photo",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-16",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "Staff",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  // TimeTec Computing tasks
+  {
+    id: 9,
+    task: "Welcome Pack",
+    assignee: "Siti Aminah",
+    due: "2025-09-19",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "HR Coordinator",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 10,
+    task: "Setup Company Email",
+    assignee: "Siti Aminah",
+    due: "2025-09-20",
+    type: "System/Access",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "IT/PIC",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 11,
+    task: "Hardware Setup",
+    assignee: "Amir Hamzah",
+    due: "2025-09-26",
+    type: "Asset",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "IT/PIC",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 12,
+    task: "Team Introduction Meeting",
+    assignee: "Siti Aminah",
+    due: "2025-09-19",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "Manager",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 13,
+    task: "Complete Training Modules",
+    assignee: "Siti Aminah",
+    due: "2025-09-22",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "Staff",
+    stage: "Next Day-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  // FingerTec tasks
+  {
+    id: 14,
+    task: "Onboarding Checklist Review",
+    assignee: "Daniel Lee",
+    due: "2025-09-21",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "HR Coordinator",
+    stage: "Pre-Onboarding" as const,
+    company: "fingertech"
+  },
+  {
+    id: 15,
+    task: "Security Access Setup",
+    assignee: "Daniel Lee",
+    due: "2025-09-22",
+    type: "System/Access",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "IT/PIC",
+    stage: "Pre-Onboarding" as const,
+    company: "fingertech"
+  },
+  {
+    id: 16,
+    task: "Department Tour",
+    assignee: "Daniel Lee",
+    due: "2025-09-21",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "completed" as const,
+    assignedTo: "Manager",
+    stage: "1st Day-Onboarding" as const,
+    company: "fingertech"
+  },
+  {
+    id: 17,
+    task: "Company Policy Briefing",
+    assignee: "Sarah Ibrahim",
+    due: "2025-10-06",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "HR Coordinator",
+    stage: "Pre-Onboarding" as const,
+    company: "fingertech"
+  }
+];
+
+// Company-specific alerts
+const allAlertsData = [
+  // TimeTec Cloud alerts
+  {
+    id: 1,
+    message: "2 tasks overdue for Harith Rahman - requires manager escalation",
+    type: "error" as const,
+    time: "2 hours ago",
+    company: "timetec-cloud"
+  },
+  {
+    id: 2,
+    message: "Aina Zulkifli pending laptop pickup - asset location confirmed",
+    type: "warning" as const,
+    time: "4 hours ago",
+    company: "timetec-cloud"
+  },
+  // TimeTec Computing alerts
+  {
+    id: 3,
+    message: "Amir Hamzah workstation setup delayed - IT team notified",
+    type: "warning" as const,
+    time: "1 hour ago",
+    company: "timetec-computing"
+  },
+  {
+    id: 4,
+    message: "Siti Aminah training completion due tomorrow",
+    type: "info" as const,
+    time: "3 hours ago",
+    company: "timetec-computing"
+  },
+  // FingerTec alerts
+  {
+    id: 5,
+    message: "Daniel Lee security access pending approval",
+    type: "warning" as const,
+    time: "5 hours ago",
+    company: "fingertech"
+  },
+  {
+    id: 6,
+    message: "Sarah Ibrahim onboarding scheduled for next week",
+    type: "info" as const,
+    time: "1 day ago",
+    company: "fingertech"
+  }
+];
+
+interface OnboardingDashboardProps {
+  currentUserRole?: string;
+}
+
+export function OnboardingDashboard({ currentUserRole = "HR Admin" }: OnboardingDashboardProps) {
+  const [selectedCompanies, setSelectedCompanies] = useState<string[]>(["timetec-cloud"]);
+  const [selectedStageFilter, setSelectedStageFilter] = useState<string | null>(null);
+
+  const toggleCompany = (companyId: string) => {
+    setSelectedCompanies(prev =>
+      prev.includes(companyId)
+        ? prev.filter(id => id !== companyId)
+        : [...prev, companyId]
+    );
+  };
+
+  const handleStageClick = (stage: string) => {
+    // Toggle filter: if clicking the same stage, clear filter; otherwise set new filter
+    setSelectedStageFilter(prev => prev === stage ? null : stage);
+  };
+
+  // Define team structure based on assignedTo roles
+  const getTeamRoles = (userRole: string): string[] => {
+    // Map roles to their team members
+    const teamMapping: Record<string, string[]> = {
+      "HR Admin": ["HR Admin", "HR Coordinator"],
+      "HR Coordinator": ["HR Admin", "HR Coordinator"],
+      "Manager": ["Manager"],
+      "IT/PIC": ["IT/PIC"],
+      "Staff": ["Staff"]
+    };
+
+    return teamMapping[userRole] || [userRole];
+  };
+
+  // Filter data based on selected companies
+  const filteredNewHires = useMemo(() => {
+    return allNewHires.filter(hire => selectedCompanies.includes(hire.company));
+  }, [selectedCompanies]);
+
+  // Filter new hires by stage (for Progress by New Hire table)
+  const displayedNewHires = useMemo(() => {
+    if (!selectedStageFilter) {
+      return filteredNewHires;
+    }
+    return filteredNewHires.filter(hire => hire.currentStage === selectedStageFilter);
+  }, [filteredNewHires, selectedStageFilter]);
+
+  const filteredTasks = useMemo(() => {
+    return allTasksData.filter(task => selectedCompanies.includes(task.company));
+  }, [selectedCompanies]);
+
+  const filteredAlerts = useMemo(() => {
+    return allAlertsData.filter(alert => selectedCompanies.includes(alert.company));
+  }, [selectedCompanies]);
+
+  // Calculate stage-specific progress based on employee completion
+  const stageProgress = useMemo(() => {
+    // Group tasks by stage and assignee (employee)
+    const calculateStageProgress = (stage: string) => {
+      // Get all tasks for this stage
+      const stageTasks = filteredTasks.filter(task => task.stage === stage);
+
+      // Get unique employees who have tasks in this stage
+      const employeesInStage = [...new Set(stageTasks.map(task => task.assignee))];
+
+      if (employeesInStage.length === 0) {
+        return { completed: 0, total: 0, percentage: 0 };
+      }
+
+      // Count how many employees completed ALL their tasks in this stage
+      let employeesCompleted = 0;
+
+      employeesInStage.forEach(employee => {
+        const employeeTasks = stageTasks.filter(task => task.assignee === employee);
+        const allTasksCompleted = employeeTasks.every(task => task.status === "completed");
+
+        if (allTasksCompleted) {
+          employeesCompleted++;
+        }
+      });
+
+      return {
+        completed: employeesCompleted,
+        total: employeesInStage.length,
+        percentage: Math.round((employeesCompleted / employeesInStage.length) * 100)
+      };
+    };
+
+    return {
+      preOnboarding: calculateStageProgress("Pre-Onboarding"),
+      firstDay: calculateStageProgress("1st Day-Onboarding"),
+      nextDay: calculateStageProgress("Next Day-Onboarding")
+    };
+  }, [filteredTasks]);
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Onboarding Dashboard</h1>
+          <p className="text-muted-foreground">Track new hire progress and manage onboarding tasks</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline">
+                <Building2 className="w-4 h-4 mr-2" />
+                Companies ({selectedCompanies.length})
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" align="end">
+              <div className="space-y-3">
+                <div className="font-medium text-sm">Select Companies</div>
+                {companies.map((company) => (
+                  <div key={company.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={company.id}
+                      checked={selectedCompanies.includes(company.id)}
+                      onCheckedChange={() => toggleCompany(company.id)}
+                    />
+                    <label
+                      htmlFor={company.id}
+                      className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {company.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Button>
+            <Users className="w-4 h-4 mr-2" />
+            Add New Hire
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {currentUserRole === "Staff" ? (
+          (() => {
+            const staffTasks = filteredTasks.filter(task => task.assignedTo === "Staff");
+            const completedTasks = staffTasks.filter(task => task.status === "completed");
+            const pendingTasks = staffTasks.filter(task => task.status === "pending");
+            const notStartedTasks = staffTasks.filter(task => task.status === "not-started");
+            const totalTasks = staffTasks.length;
+            const completionPercentage = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
+            
+            return (
+              <>
+                <StatCard
+                  title="Onboarding Progress"
+                  value={`${completionPercentage}%`}
+                  icon={TrendingUp}
+                  variant="primary"
+                  subtitle={`${completedTasks.length}/${totalTasks} tasks completed`}
+                  progress={{
+                    value: completionPercentage,
+                    message: completionPercentage >= 75 
+                      ? "You're doing great! Keep up the excellent progress."
+                      : completionPercentage >= 50
+                      ? "Great progress! You're more than halfway there."
+                      : completionPercentage >= 25
+                      ? "Good start! Keep going to complete your onboarding."
+                      : "Welcome! Let's get started with your onboarding tasks."
+                  }}
+                />
+                <StatCard
+                  title="Completed Tasks" 
+                  value={`${completedTasks.length}`}
+                  icon={CheckCircle}
+                  variant="success"
+                  subtitle={`${totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0}% of total tasks`}
+                />
+                <StatCard
+                  title="Pending Tasks"
+                  value={`${pendingTasks.length}`}
+                  icon={Clock}
+                  variant="warning"
+                  subtitle={`${totalTasks > 0 ? Math.round((pendingTasks.length / totalTasks) * 100) : 0}% of total tasks`}
+                />
+                <StatCard
+                  title="Not Started"
+                  value={`${notStartedTasks.length}`}
+                  icon={AlertTriangle}
+                  variant="danger"
+                  subtitle={`${totalTasks > 0 ? Math.round((notStartedTasks.length / totalTasks) * 100) : 0}% of total tasks`}
+                />
+              </>
+            );
+          })()
+        ) : (
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Overall Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Pre-Onboarding Progress */}
+              <div
+                className={`space-y-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedStageFilter === "Pre-Onboarding"
+                    ? "bg-purple-50 border-2 border-purple-200"
+                    : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStageClick("Pre-Onboarding")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium">Pre-Onboarding</span>
+                    {selectedStageFilter === "Pre-Onboarding" && (
+                      <Badge variant="outline" className="text-xs">Filtered</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {stageProgress.preOnboarding.completed} of {stageProgress.preOnboarding.total} employees
+                    </span>
+                    <span className="text-sm font-semibold">{stageProgress.preOnboarding.percentage}%</span>
+                  </div>
+                </div>
+                <Progress value={stageProgress.preOnboarding.percentage} className="h-2" />
+              </div>
+
+              {/* 1st Day-Onboarding Progress */}
+              <div
+                className={`space-y-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedStageFilter === "1st Day-Onboarding"
+                    ? "bg-blue-50 border-2 border-blue-200"
+                    : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStageClick("1st Day-Onboarding")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium">1st Day-Onboarding</span>
+                    {selectedStageFilter === "1st Day-Onboarding" && (
+                      <Badge variant="outline" className="text-xs">Filtered</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {stageProgress.firstDay.completed} of {stageProgress.firstDay.total} employees
+                    </span>
+                    <span className="text-sm font-semibold">{stageProgress.firstDay.percentage}%</span>
+                  </div>
+                </div>
+                <Progress value={stageProgress.firstDay.percentage} className="h-2" />
+              </div>
+
+              {/* Next Day-Onboarding Progress */}
+              <div
+                className={`space-y-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedStageFilter === "Next Day-Onboarding"
+                    ? "bg-green-50 border-2 border-green-200"
+                    : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStageClick("Next Day-Onboarding")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium">Next Day-Onboarding</span>
+                    {selectedStageFilter === "Next Day-Onboarding" && (
+                      <Badge variant="outline" className="text-xs">Filtered</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {stageProgress.nextDay.completed} of {stageProgress.nextDay.total} employees
+                    </span>
+                    <span className="text-sm font-semibold">{stageProgress.nextDay.percentage}%</span>
+                  </div>
+                </div>
+                <Progress value={stageProgress.nextDay.percentage} className="h-2" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Progress by New Hire - Hidden for Staff */}
+        {currentUserRole !== "Staff" && (
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Progress by New Hire</CardTitle>
+                  {selectedStageFilter && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedStageFilter(null)}
+                    >
+                      Clear Filter
+                    </Button>
+                  )}
+                </div>
+                {selectedStageFilter && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Showing employees in{" "}
+                    <Badge
+                      className={
+                        selectedStageFilter === "Pre-Onboarding"
+                          ? "bg-purple-100 text-purple-800"
+                          : selectedStageFilter === "1st Day-Onboarding"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    >
+                      {selectedStageFilter}
+                    </Badge>
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Manager</TableHead>
+                      <TableHead>Start Date</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedNewHires.length > 0 ? (
+                      displayedNewHires.map((hire) => (
+                      <TableRow key={hire.id}>
+                        <TableCell className="font-medium">{hire.name}</TableCell>
+                        <TableCell>{hire.manager}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            {hire.startDate}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              hire.currentStage === "Pre-Onboarding"
+                                ? "bg-purple-100 text-purple-800"
+                                : hire.currentStage === "1st Day-Onboarding"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }
+                          >
+                            {hire.currentStage}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2 cursor-pointer">
+                                  <Progress value={hire.progress} className="w-20" />
+                                  <span className="text-sm text-muted-foreground">{hire.progress}%</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">Task Completed:</p>
+                                <p className="text-sm">{hire.completedTasks} of {hire.totalTasks} tasks</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={hire.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          No employees found in {selectedStageFilter}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Alerts - Hidden for Staff */}
+        {currentUserRole !== "Staff" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Alerts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {filteredAlerts.length > 0 ? (
+                filteredAlerts.map((alert) => (
+                  <div key={alert.id} className="p-3 rounded-lg border border-border bg-muted/50">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className={`w-4 h-4 mt-0.5 ${
+                        alert.type === "error" ? "text-red-500" : "text-amber-500"
+                      }`} />
+                      <div className="flex-1">
+                        <p className="text-sm">{alert.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{alert.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No alerts for selected companies
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Tasks */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Tasks</CardTitle>
+              {currentUserRole === "Staff" && (
+                <p className="text-sm text-muted-foreground mt-1">Tasks assigned specifically to you</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="assigned" className="space-y-4">
+            {currentUserRole !== "Staff" ? (
+              <TabsList>
+                <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="all">All</TabsTrigger>
+              </TabsList>
+            ) : (
+              <TabsList>
+                <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
+              </TabsList>
+            )}
+            
+            <TabsContent value="assigned">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Assignee</TableHead>
+                    <TableHead>Due</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Stage</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTasks
+                    .filter(task => task.assignedTo === currentUserRole)
+                    .map((task) => (
+                    <TableRow key={task.id}>
+                      <TableCell className="font-medium">{task.task}</TableCell>
+                      <TableCell>{currentUserRole === "Staff" ? "New Hire" : task.assignee}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          {task.due}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{task.type}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            task.stage === "Pre-Onboarding"
+                              ? "bg-purple-100 text-purple-800"
+                              : task.stage === "1st Day-Onboarding"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                          }
+                        >
+                          {task.stage}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={task.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
+
+            {currentUserRole !== "Staff" && (
+              <>
+                <TabsContent value="team">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Assignee</TableHead>
+                        <TableHead>Due</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTasks
+                        .filter(task => getTeamRoles(currentUserRole).includes(task.assignedTo))
+                        .map((task) => (
+                        <TableRow key={task.id}>
+                          <TableCell className="font-medium">{task.task}</TableCell>
+                          <TableCell>{task.assignee}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                              {task.due}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{task.type}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                task.stage === "Pre-Onboarding"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : task.stage === "1st Day-Onboarding"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-green-100 text-green-800"
+                              }
+                            >
+                              {task.stage}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip status={task.status} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                <TabsContent value="all">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Assignee</TableHead>
+                        <TableHead>Due</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTasks.map((task) => (
+                        <TableRow key={task.id}>
+                          <TableCell className="font-medium">{task.task}</TableCell>
+                          <TableCell>{task.assignee}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                              {task.due}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{task.type}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                task.stage === "Pre-Onboarding"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : task.stage === "1st Day-Onboarding"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-green-100 text-green-800"
+                              }
+                            >
+                              {task.stage}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip status={task.status} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
