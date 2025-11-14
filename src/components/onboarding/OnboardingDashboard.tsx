@@ -567,6 +567,33 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
     };
   }, [filteredTasks]);
 
+  // Calculate overdue tasks for non-Staff users
+  const overdueTasks = useMemo(() => {
+    const overdue = filteredTasks.filter(task => task.status === "overdue");
+    return {
+      total: overdue.length,
+      tasks: overdue
+    };
+  }, [filteredTasks]);
+
+  // Calculate my tasks (assigned to current user role) for non-Staff users
+  const myTasks = useMemo(() => {
+    const myTasksList = filteredTasks.filter(task => task.assignedTo === currentUserRole);
+    const completed = myTasksList.filter(task => task.status === "completed");
+    const pending = myTasksList.filter(task => task.status === "pending");
+    const notStarted = myTasksList.filter(task => task.status === "not-started");
+
+    return {
+      total: myTasksList.length,
+      completed: completed.length,
+      pending: pending.length,
+      notStarted: notStarted.length,
+      completionPercentage: myTasksList.length > 0
+        ? Math.round((completed.length / myTasksList.length) * 100)
+        : 0
+    };
+  }, [filteredTasks, currentUserRole]);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -621,7 +648,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
             const notStartedTasks = staffTasks.filter(task => task.status === "not-started");
             const totalTasks = staffTasks.length;
             const completionPercentage = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
-            
+
             return (
               <>
                 <StatCard
@@ -632,7 +659,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   subtitle={`${completedTasks.length}/${totalTasks} tasks completed`}
                   progress={{
                     value: completionPercentage,
-                    message: completionPercentage >= 75 
+                    message: completionPercentage >= 75
                       ? "You're doing great! Keep up the excellent progress."
                       : completionPercentage >= 50
                       ? "Great progress! You're more than halfway there."
@@ -642,7 +669,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   }}
                 />
                 <StatCard
-                  title="Completed Tasks" 
+                  title="Completed Tasks"
                   value={`${completedTasks.length}`}
                   icon={CheckCircle}
                   variant="success"
@@ -666,7 +693,9 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
             );
           })()
         ) : (
-          <Card className="lg:col-span-3">
+          <>
+          {/* Overall Progress Card */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
@@ -756,6 +785,86 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
               </div>
             </CardContent>
           </Card>
+
+          {/* Overdue Tasks Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                Overdue Tasks
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-bold text-red-600">{overdueTasks.total}</span>
+                <span className="text-sm text-muted-foreground">Tasks overdue</span>
+              </div>
+              {overdueTasks.total > 0 ? (
+                <div className="space-y-2">
+                  {overdueTasks.tasks.slice(0, 3).map((task) => (
+                    <div key={task.id} className="p-2 rounded-lg bg-red-50 border border-red-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-red-900">{task.task}</p>
+                          <p className="text-xs text-red-700 mt-1">
+                            Assignee: {task.assignee} • Due: {task.due}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {overdueTasks.total > 3 && (
+                    <p className="text-xs text-muted-foreground text-center pt-2">
+                      +{overdueTasks.total - 3} more overdue tasks
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                  <p className="text-sm text-muted-foreground">No overdue tasks!</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Alerts Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {filteredAlerts.length > 0 ? (
+                filteredAlerts.slice(0, 3).map((alert) => (
+                  <div key={alert.id} className="p-2 rounded-lg border border-border bg-muted/50">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className={`w-4 h-4 mt-0.5 ${
+                        alert.type === "error" ? "text-red-500" : alert.type === "warning" ? "text-amber-500" : "text-blue-500"
+                      }`} />
+                      <div className="flex-1">
+                        <p className="text-sm">{alert.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{alert.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                  <p className="text-sm text-muted-foreground">No alerts for selected companies</p>
+                </div>
+              )}
+              {filteredAlerts.length > 3 && (
+                <p className="text-xs text-muted-foreground text-center pt-2">
+                  +{filteredAlerts.length - 3} more alerts
+                </p>
+              )}
+            </CardContent>
+          </Card>
+</>
         )}
       </div>
 
@@ -866,35 +975,6 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
           </div>
         )}
 
-        {/* Alerts - Hidden for Staff */}
-        {currentUserRole !== "Staff" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Alerts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {filteredAlerts.length > 0 ? (
-                filteredAlerts.map((alert) => (
-                  <div key={alert.id} className="p-3 rounded-lg border border-border bg-muted/50">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className={`w-4 h-4 mt-0.5 ${
-                        alert.type === "error" ? "text-red-500" : "text-amber-500"
-                      }`} />
-                      <div className="flex-1">
-                        <p className="text-sm">{alert.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{alert.time}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No alerts for selected companies
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Tasks */}
