@@ -187,7 +187,19 @@ const responseTypeOptions = [
 // PIC (Person in Charge) options for system access
 const picOptions = [
   { value: "IT Admin", label: "IT Admin" },
-  { value: "System Admin", label: "System Admin" }, 
+  { value: "System Admin", label: "System Admin" },
+  { value: "HR Admin", label: "HR Admin" },
+  { value: "Finance Admin", label: "Finance Admin" },
+  { value: "Department Manager", label: "Department Manager" },
+  { value: "Technical Lead", label: "Technical Lead" },
+  { value: "Security Officer", label: "Security Officer" }
+];
+
+// PIC options for checklist items (includes "None" for staff-assigned tasks)
+const checklistPicOptions = [
+  { value: "None", label: "None (Direct to Staff)" },
+  { value: "IT Admin", label: "IT Admin" },
+  { value: "System Admin", label: "System Admin" },
   { value: "HR Admin", label: "HR Admin" },
   { value: "Finance Admin", label: "Finance Admin" },
   { value: "Department Manager", label: "Department Manager" },
@@ -2259,7 +2271,7 @@ export function TaskTemplates() {
                                     <SelectValue placeholder="Select PIC responsible for this checklist item" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {picOptions.map((option) => (
+                                    {checklistPicOptions.map((option) => (
                                       <SelectItem key={option.value} value={option.value}>
                                         {option.label}
                                       </SelectItem>
@@ -2340,7 +2352,7 @@ export function TaskTemplates() {
                                             <SelectValue placeholder="Select PIC" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {picOptions.map((option) => (
+                                            {checklistPicOptions.map((option) => (
                                               <SelectItem key={option.value} value={option.value}>
                                                 {option.label}
                                               </SelectItem>
@@ -2351,7 +2363,7 @@ export function TaskTemplates() {
                                       
                                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <CheckSquare className="w-3 h-3" />
-                                        <span>Assigned to: <strong>{item.pic}</strong></span>
+                                        <span>Assigned to: <strong>{item.pic === "None" ? "Direct to Staff" : item.pic}</strong></span>
                                       </div>
                                     </div>
                                     

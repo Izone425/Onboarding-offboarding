@@ -6,6 +6,8 @@ import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   TrendingUp,
   FileText,
@@ -18,7 +20,8 @@ import {
   Calendar,
   ClipboardList,
   Building2,
-  ChevronDown
+  ChevronDown,
+  X
 } from "lucide-react";
 import {
   Table,
@@ -40,6 +43,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "../ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { getWorkflowsByCategory, getWorkflowById } from "../../utils/workflowData";
 
 const companies = [
   { id: "timetec-cloud", name: "TimeTec Cloud" },
@@ -478,6 +496,14 @@ interface OnboardingDashboardProps {
 export function OnboardingDashboard({ currentUserRole = "HR Admin" }: OnboardingDashboardProps) {
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>(["timetec-cloud"]);
   const [selectedStageFilter, setSelectedStageFilter] = useState<string | null>(null);
+  const [isAssignDrawerOpen, setIsAssignDrawerOpen] = useState(false);
+  const [assignFormData, setAssignFormData] = useState({
+    employeeId: "",
+    workflowId: "",
+    startDate: ""
+  });
+  const [isEmployeeTasksDrawerOpen, setIsEmployeeTasksDrawerOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<typeof allNewHires[0] | null>(null);
 
   const toggleCompany = (companyId: string) => {
     setSelectedCompanies(prev =>
@@ -504,6 +530,43 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
     };
 
     return teamMapping[userRole] || [userRole];
+  };
+
+  // Get onboarding workflows
+  const onboardingWorkflows = useMemo(() => {
+    return getWorkflowsByCategory("onboarding");
+  }, []);
+
+  // Get selected workflow details
+  const selectedWorkflow = useMemo(() => {
+    if (!assignFormData.workflowId) return null;
+    return getWorkflowById(assignFormData.workflowId);
+  }, [assignFormData.workflowId]);
+
+  // Handle assign workflow drawer
+  const handleOpenAssignDrawer = () => {
+    setAssignFormData({
+      employeeId: "",
+      workflowId: "",
+      startDate: ""
+    });
+    setIsAssignDrawerOpen(true);
+  };
+
+  const handleCloseAssignDrawer = () => {
+    setIsAssignDrawerOpen(false);
+    setAssignFormData({
+      employeeId: "",
+      workflowId: "",
+      startDate: ""
+    });
+  };
+
+  const handleAssignWorkflow = () => {
+    // TODO: Implement assign workflow logic
+    console.log("Assigning workflow:", assignFormData);
+    console.log("Workflow details:", selectedWorkflow);
+    handleCloseAssignDrawer();
   };
 
   // Filter data based on selected companies
@@ -631,9 +694,9 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
               </div>
             </PopoverContent>
           </Popover>
-          <Button>
+          <Button onClick={handleOpenAssignDrawer}>
             <Users className="w-4 h-4 mr-2" />
-            Add New Hire
+            Assign Onboarding Template
           </Button>
         </div>
       </div>
@@ -868,11 +931,9 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Progress by New Hire - Hidden for Staff */}
-        {currentUserRole !== "Staff" && (
-          <div className="lg:col-span-2">
-            <Card>
+      {/* Progress by New Hire - Hidden for Staff */}
+      {currentUserRole !== "Staff" && (
+        <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Progress by New Hire</CardTitle>
@@ -908,8 +969,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Manager</TableHead>
-                      <TableHead>Start Date</TableHead>
+                      <TableHead>Reporting Manager</TableHead>
                       <TableHead>Stage</TableHead>
                       <TableHead>Progress</TableHead>
                       <TableHead>Status</TableHead>
@@ -917,16 +977,21 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   </TableHeader>
                   <TableBody>
                     {displayedNewHires.length > 0 ? (
-                      displayedNewHires.map((hire) => (
-                      <TableRow key={hire.id}>
+                      displayedNewHires.map((hire) => {
+                        // Get tasks for this employee
+                        const employeeTasks = filteredTasks.filter(task => task.assignee === hire.name);
+
+                        return (
+                      <TableRow
+                        key={hire.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => {
+                          setSelectedEmployee(hire);
+                          setIsEmployeeTasksDrawerOpen(true);
+                        }}
+                      >
                         <TableCell className="font-medium">{hire.name}</TableCell>
                         <TableCell>{hire.manager}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            {hire.startDate}
-                          </div>
-                        </TableCell>
                         <TableCell>
                           <Badge
                             className={
@@ -960,10 +1025,11 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                           <StatusChip status={hire.status} />
                         </TableCell>
                       </TableRow>
-                    ))
+                        );
+                      })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                           No employees found in {selectedStageFilter}
                         </TableCell>
                       </TableRow>
@@ -972,10 +1038,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 </Table>
               </CardContent>
             </Card>
-          </div>
         )}
-
-      </div>
 
       {/* Tasks */}
       <Card>
@@ -1196,6 +1259,293 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Assign Onboarding Workflow Drawer */}
+      <Sheet open={isAssignDrawerOpen} onOpenChange={setIsAssignDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Assign Onboarding Workflow</SheetTitle>
+            <SheetDescription>
+              Select an employee and onboarding workflow to begin the onboarding process.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-8 mt-8">
+            {/* Employee Selection */}
+            <div className="space-y-3">
+              <Label htmlFor="employee" className="text-sm font-semibold">
+                Select Employee *
+              </Label>
+              <Select
+                value={assignFormData.employeeId}
+                onValueChange={(value) => setAssignFormData(prev => ({ ...prev, employeeId: value }))}
+              >
+                <SelectTrigger id="employee" className="h-11">
+                  <SelectValue placeholder="Choose an employee" />
+                </SelectTrigger>
+                <SelectContent className="max-w-[calc(100vw-3rem)] sm:max-w-[26rem]">
+                  {filteredNewHires.map((hire) => (
+                    <SelectItem key={hire.id} value={hire.id.toString()}>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-medium">{hire.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {companies.find(c => c.id === hire.company)?.name}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Select the employee to assign the onboarding workflow to
+              </p>
+            </div>
+
+            {/* Workflow Selection */}
+            <div className="space-y-3">
+              <Label htmlFor="workflow" className="text-sm font-semibold">
+                Onboarding Workflow *
+              </Label>
+              <Select
+                value={assignFormData.workflowId}
+                onValueChange={(value) => setAssignFormData(prev => ({ ...prev, workflowId: value }))}
+              >
+                <SelectTrigger id="workflow" className="h-11">
+                  <SelectValue placeholder="Choose a workflow" />
+                </SelectTrigger>
+                <SelectContent className="max-w-[calc(100vw-3rem)] sm:max-w-[26rem]">
+                  {onboardingWorkflows.map((workflow) => (
+                    <SelectItem key={workflow.id} value={workflow.id}>
+                      {workflow.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Select the onboarding workflow with configured tasks
+              </p>
+            </div>
+
+            {/* Task List - Show when workflow is selected */}
+            {selectedWorkflow && (
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">
+                  Workflow Tasks ({selectedWorkflow.tasks.length})
+                </Label>
+                <div className="border border-border rounded-lg max-h-80 overflow-y-auto">
+                  {/* Group tasks by stage */}
+                  {["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"].map((stage) => {
+                    const stageTasks = selectedWorkflow.tasks.filter(task => task.stage === stage);
+                    if (stageTasks.length === 0) return null;
+
+                    return (
+                      <div key={stage} className="border-b last:border-b-0">
+                        {/* Stage Header */}
+                        <div className={`px-4 py-2.5 font-semibold text-sm sticky top-0 z-10 ${
+                          stage === "Pre-Onboarding"
+                            ? "bg-purple-50 text-purple-900 border-b border-purple-200"
+                            : stage === "1st Day-Onboarding"
+                            ? "bg-blue-50 text-blue-900 border-b border-blue-200"
+                            : "bg-green-50 text-green-900 border-b border-green-200"
+                        }`}>
+                          {stage} ({stageTasks.length} {stageTasks.length === 1 ? 'task' : 'tasks'})
+                        </div>
+                        {/* Stage Tasks */}
+                        <Table>
+                          <TableHeader className="sr-only">
+                            <TableRow>
+                              <TableHead className="w-8">#</TableHead>
+                              <TableHead>Task Name</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {stageTasks.map((task, index) => (
+                              <TableRow key={task.id} className="border-b-0">
+                                <TableCell className="text-xs text-muted-foreground w-8 py-3 pl-4">{index + 1}</TableCell>
+                                <TableCell className="text-sm py-3 pr-4">
+                                  <div className="flex flex-col gap-1">
+                                    <span className="font-medium">{task.name}</span>
+                                    <span className="text-xs text-muted-foreground">{task.type}</span>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  These tasks will be assigned to the employee upon workflow assignment
+                </p>
+              </div>
+            )}
+
+            {/* Preview Section */}
+            {assignFormData.employeeId && assignFormData.workflowId && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                <h4 className="text-sm font-semibold text-blue-900">Assignment Preview</h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Employee:</span>
+                    <span className="font-medium">
+                      {filteredNewHires.find(h => h.id.toString() === assignFormData.employeeId)?.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Workflow:</span>
+                    <span className="font-medium">
+                      {selectedWorkflow?.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Tasks:</span>
+                    <span className="font-medium">
+                      {selectedWorkflow?.tasks.length || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleCloseAssignDrawer}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleAssignWorkflow}
+                disabled={!assignFormData.employeeId || !assignFormData.workflowId}
+              >
+                Assign Workflow
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Employee Tasks Drawer */}
+      <Sheet open={isEmployeeTasksDrawerOpen} onOpenChange={setIsEmployeeTasksDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Tasks for {selectedEmployee?.name}</SheetTitle>
+            <SheetDescription>
+              Viewing all tasks for {selectedEmployee?.currentStage}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-4">
+            {selectedEmployee && (() => {
+              // Filter tasks by employee name and their current stage
+              const employeeTasks = filteredTasks.filter(
+                task => task.assignee === selectedEmployee.name && task.stage === selectedEmployee.currentStage
+              );
+
+              // Calculate progress based on actual tasks in this stage
+              const completedTasksCount = employeeTasks.filter(task => task.status === "completed").length;
+              const totalTasksCount = employeeTasks.length;
+              const actualProgress = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
+              if (employeeTasks.length === 0) {
+                return (
+                  <div className="text-center py-12">
+                    <CheckCircle className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground">No tasks found for {selectedEmployee.currentStage}</p>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  {/* Employee Info Card */}
+                  <Card className="bg-muted/50">
+                    <CardContent className="pt-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Manager</p>
+                          <p className="font-medium">{selectedEmployee.manager}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Start Date</p>
+                          <p className="font-medium">{selectedEmployee.startDate}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Current Stage</p>
+                          <Badge
+                            className={
+                              selectedEmployee.currentStage === "Pre-Onboarding"
+                                ? "bg-purple-100 text-purple-800"
+                                : selectedEmployee.currentStage === "1st Day-Onboarding"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }
+                          >
+                            {selectedEmployee.currentStage}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Progress</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Progress value={actualProgress} className="w-20" />
+                            <span className="text-sm font-medium">{actualProgress}%</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {completedTasksCount} of {totalTasksCount} tasks completed
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Tasks List */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-sm text-muted-foreground">
+                      Tasks ({employeeTasks.length})
+                    </h3>
+                    {employeeTasks.map((task) => (
+                      <Card key={task.id}>
+                        <CardContent className="pt-4">
+                          <div className="flex items-start gap-3">
+                            {task.status === "completed" ? (
+                              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            ) : task.status === "overdue" ? (
+                              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            ) : (
+                              <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-medium">{task.task}</h4>
+                                <StatusChip status={task.status} />
+                              </div>
+                              <div className="mt-2 space-y-1">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <span>Assigned to:</span>
+                                  <span className="font-medium text-foreground">{task.assignedTo}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  <span>Due: {task.dueDate}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
