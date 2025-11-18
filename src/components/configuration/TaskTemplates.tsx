@@ -270,6 +270,14 @@ export function TaskTemplates() {
     pic: ""
   });
 
+  // Assigned Person in Charge for task types
+  const [generalPic, setGeneralPic] = useState<string>("");
+  const [documentPic, setDocumentPic] = useState<string>("");
+  const [informationPic, setInformationPic] = useState<string>("");
+  const [questionnairePic, setQuestionnairePic] = useState<string>("");
+  const [meetingPic, setMeetingPic] = useState<string>("");
+  const [checklistPic, setChecklistPic] = useState<string>("");
+
   // Sorting handler
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -824,6 +832,13 @@ export function TaskTemplates() {
     setSystemAccesses([]);
     setAssetItems([]);
     setChecklistItems([]);
+    // Clear PIC assignments
+    setGeneralPic("");
+    setDocumentPic("");
+    setInformationPic("");
+    setQuestionnairePic("");
+    setMeetingPic("");
+    setChecklistPic("");
 
     // Populate realistic data based on task type
     switch (template.type) {
@@ -1088,6 +1103,13 @@ export function TaskTemplates() {
       setSystemAccesses([]);
       setAssetItems([]);
       setChecklistItems([]);
+      // Clear PIC assignments
+      setGeneralPic("");
+      setDocumentPic("");
+      setInformationPic("");
+      setQuestionnairePic("");
+      setMeetingPic("");
+      setChecklistPic("");
     }
   };
 
@@ -1104,7 +1126,15 @@ export function TaskTemplates() {
       questions,
       systemAccesses,
       assetItems,
-      checklistItems
+      checklistItems,
+      assignedPIC: {
+        generalPic,
+        documentPic,
+        informationPic,
+        questionnairePic,
+        meetingPic,
+        checklistPic
+      }
     });
     setIsDrawerOpen(false);
   };
@@ -1131,6 +1161,13 @@ export function TaskTemplates() {
     setAssetItems([]);
     setChecklistItems([]);
     setEditingTemplate(null);
+    // Clear PIC assignments
+    setGeneralPic("");
+    setDocumentPic("");
+    setInformationPic("");
+    setQuestionnairePic("");
+    setMeetingPic("");
+    setChecklistPic("");
     setCopyFromTemplate("none");
     setNewDocumentName("");
     setIsAddingDocument(false);
@@ -1538,6 +1575,64 @@ export function TaskTemplates() {
                           </div>
                         )}
                       </div>
+
+                      {/* Assigned Person in Charge for Information Task */}
+                      <div className="space-y-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <Label htmlFor="informationPic" className="text-sm font-medium">Assigned Person in Charge (PIC) *</Label>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Select the person responsible for updating this information task as completed
+                        </p>
+                        <Select
+                          value={informationPic}
+                          onValueChange={setInformationPic}
+                        >
+                          <SelectTrigger id="informationPic">
+                            <SelectValue placeholder="Select PIC responsible for this information task" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {/* Department Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                              Department
+                            </div>
+                            <SelectItem value="dept-hr">Human Resources</SelectItem>
+                            <SelectItem value="dept-it">Information Technology</SelectItem>
+                            <SelectItem value="dept-finance">Finance & Accounting</SelectItem>
+                            <SelectItem value="dept-operations">Operations</SelectItem>
+                            <SelectItem value="dept-marketing">Marketing</SelectItem>
+                            <SelectItem value="dept-sales">Sales</SelectItem>
+
+                            {/* Designation Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Designation
+                            </div>
+                            <SelectItem value="desig-manager">Manager</SelectItem>
+                            <SelectItem value="desig-supervisor">Supervisor</SelectItem>
+                            <SelectItem value="desig-coordinator">Coordinator</SelectItem>
+                            <SelectItem value="desig-specialist">Specialist</SelectItem>
+                            <SelectItem value="desig-admin">Admin</SelectItem>
+                            <SelectItem value="desig-executive">Executive</SelectItem>
+
+                            {/* Employee Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Employee
+                            </div>
+                            <SelectItem value="emp-sarah-ahmad">Sarah Ahmad (HR Admin)</SelectItem>
+                            <SelectItem value="emp-michael-chen">Michael Chen (HR Coordinator)</SelectItem>
+                            <SelectItem value="emp-david-kim">David Kim (IT Admin)</SelectItem>
+                            <SelectItem value="emp-emily-rodriguez">Emily Rodriguez (Manager)</SelectItem>
+                            <SelectItem value="emp-james-wilson">James Wilson (Finance Admin)</SelectItem>
+                            <SelectItem value="emp-lisa-patel">Lisa Patel (Operations Coordinator)</SelectItem>
+                            <SelectItem value="emp-john-smith">John Smith (IT Specialist)</SelectItem>
+                            <SelectItem value="emp-maria-garcia">Maria Garcia (Marketing Executive)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {informationPic && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                            <FileText className="w-4 h-4" />
+                            <span>Assigned to: <strong>{informationPic.startsWith('dept-') ? informationPic.replace('dept-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : informationPic.startsWith('desig-') ? informationPic.replace('desig-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : informationPic.replace('emp-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1694,6 +1789,64 @@ export function TaskTemplates() {
                           )}
                         </div>
                       )}
+
+                      {/* Assigned Person in Charge for Document Task */}
+                      <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <Label htmlFor="documentPic" className="text-sm font-medium">Assigned Person in Charge (PIC) *</Label>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Select the person responsible for updating this document task as completed
+                        </p>
+                        <Select
+                          value={documentPic}
+                          onValueChange={setDocumentPic}
+                        >
+                          <SelectTrigger id="documentPic">
+                            <SelectValue placeholder="Select PIC responsible for this document task" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {/* Department Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                              Department
+                            </div>
+                            <SelectItem value="dept-hr">Human Resources</SelectItem>
+                            <SelectItem value="dept-it">Information Technology</SelectItem>
+                            <SelectItem value="dept-finance">Finance & Accounting</SelectItem>
+                            <SelectItem value="dept-operations">Operations</SelectItem>
+                            <SelectItem value="dept-marketing">Marketing</SelectItem>
+                            <SelectItem value="dept-sales">Sales</SelectItem>
+
+                            {/* Designation Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Designation
+                            </div>
+                            <SelectItem value="desig-manager">Manager</SelectItem>
+                            <SelectItem value="desig-supervisor">Supervisor</SelectItem>
+                            <SelectItem value="desig-coordinator">Coordinator</SelectItem>
+                            <SelectItem value="desig-specialist">Specialist</SelectItem>
+                            <SelectItem value="desig-admin">Admin</SelectItem>
+                            <SelectItem value="desig-executive">Executive</SelectItem>
+
+                            {/* Employee Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Employee
+                            </div>
+                            <SelectItem value="emp-sarah-ahmad">Sarah Ahmad (HR Admin)</SelectItem>
+                            <SelectItem value="emp-michael-chen">Michael Chen (HR Coordinator)</SelectItem>
+                            <SelectItem value="emp-david-kim">David Kim (IT Admin)</SelectItem>
+                            <SelectItem value="emp-emily-rodriguez">Emily Rodriguez (Manager)</SelectItem>
+                            <SelectItem value="emp-james-wilson">James Wilson (Finance Admin)</SelectItem>
+                            <SelectItem value="emp-lisa-patel">Lisa Patel (Operations Coordinator)</SelectItem>
+                            <SelectItem value="emp-john-smith">John Smith (IT Specialist)</SelectItem>
+                            <SelectItem value="emp-maria-garcia">Maria Garcia (Marketing Executive)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {documentPic && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                            <FileText className="w-4 h-4" />
+                            <span>Assigned to: <strong>{documentPic.startsWith('dept-') ? documentPic.replace('dept-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : documentPic.startsWith('desig-') ? documentPic.replace('desig-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : documentPic.replace('emp-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -2395,6 +2548,64 @@ export function TaskTemplates() {
                             <p className="text-sm mt-1">Click "Add Checklist Item" to get started</p>
                           </div>
                         )}
+
+                        {/* Assigned Person in Charge for overall Checklist Task */}
+                        <div className="space-y-3 p-4 bg-teal-50 border border-teal-200 rounded-lg mt-4">
+                          <Label htmlFor="checklistPic" className="text-sm font-medium">Assigned Person in Charge (PIC) for Task Completion *</Label>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Select the person responsible for updating this checklist task as completed (Note: Individual checklist items may have their own PICs)
+                          </p>
+                          <Select
+                            value={checklistPic}
+                            onValueChange={setChecklistPic}
+                          >
+                            <SelectTrigger id="checklistPic">
+                              <SelectValue placeholder="Select PIC responsible for overall checklist task completion" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {/* Department Section */}
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                                Department
+                              </div>
+                              <SelectItem value="dept-hr">Human Resources</SelectItem>
+                              <SelectItem value="dept-it">Information Technology</SelectItem>
+                              <SelectItem value="dept-finance">Finance & Accounting</SelectItem>
+                              <SelectItem value="dept-operations">Operations</SelectItem>
+                              <SelectItem value="dept-marketing">Marketing</SelectItem>
+                              <SelectItem value="dept-sales">Sales</SelectItem>
+
+                              {/* Designation Section */}
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                                Designation
+                              </div>
+                              <SelectItem value="desig-manager">Manager</SelectItem>
+                              <SelectItem value="desig-supervisor">Supervisor</SelectItem>
+                              <SelectItem value="desig-coordinator">Coordinator</SelectItem>
+                              <SelectItem value="desig-specialist">Specialist</SelectItem>
+                              <SelectItem value="desig-admin">Admin</SelectItem>
+                              <SelectItem value="desig-executive">Executive</SelectItem>
+
+                              {/* Employee Section */}
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                                Employee
+                              </div>
+                              <SelectItem value="emp-sarah-ahmad">Sarah Ahmad (HR Admin)</SelectItem>
+                              <SelectItem value="emp-michael-chen">Michael Chen (HR Coordinator)</SelectItem>
+                              <SelectItem value="emp-david-kim">David Kim (IT Admin)</SelectItem>
+                              <SelectItem value="emp-emily-rodriguez">Emily Rodriguez (Manager)</SelectItem>
+                              <SelectItem value="emp-james-wilson">James Wilson (Finance Admin)</SelectItem>
+                              <SelectItem value="emp-lisa-patel">Lisa Patel (Operations Coordinator)</SelectItem>
+                              <SelectItem value="emp-john-smith">John Smith (IT Specialist)</SelectItem>
+                              <SelectItem value="emp-maria-garcia">Maria Garcia (Marketing Executive)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {checklistPic && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                              <CheckSquare className="w-4 h-4" />
+                              <span>Assigned to: <strong>{checklistPic.startsWith('dept-') ? checklistPic.replace('dept-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : checklistPic.startsWith('desig-') ? checklistPic.replace('desig-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : checklistPic.replace('emp-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2644,8 +2855,216 @@ export function TaskTemplates() {
                             <p className="text-sm mt-1">Click "Add Question" to get started</p>
                           </div>
                         )}
+
+                        {/* Assigned Person in Charge for Questionnaire Task */}
+                        <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-lg mt-4">
+                          <Label htmlFor="questionnairePic" className="text-sm font-medium">Assigned Person in Charge (PIC) *</Label>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Select the person responsible for updating this questionnaire task as completed
+                          </p>
+                          <Select
+                            value={questionnairePic}
+                            onValueChange={setQuestionnairePic}
+                          >
+                            <SelectTrigger id="questionnairePic">
+                              <SelectValue placeholder="Select PIC responsible for this questionnaire task" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {/* Department Section */}
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                                Department
+                              </div>
+                              <SelectItem value="dept-hr">Human Resources</SelectItem>
+                              <SelectItem value="dept-it">Information Technology</SelectItem>
+                              <SelectItem value="dept-finance">Finance & Accounting</SelectItem>
+                              <SelectItem value="dept-operations">Operations</SelectItem>
+                              <SelectItem value="dept-marketing">Marketing</SelectItem>
+                              <SelectItem value="dept-sales">Sales</SelectItem>
+
+                              {/* Designation Section */}
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                                Designation
+                              </div>
+                              <SelectItem value="desig-manager">Manager</SelectItem>
+                              <SelectItem value="desig-supervisor">Supervisor</SelectItem>
+                              <SelectItem value="desig-coordinator">Coordinator</SelectItem>
+                              <SelectItem value="desig-specialist">Specialist</SelectItem>
+                              <SelectItem value="desig-admin">Admin</SelectItem>
+                              <SelectItem value="desig-executive">Executive</SelectItem>
+
+                              {/* Employee Section */}
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                                Employee
+                              </div>
+                              <SelectItem value="emp-sarah-ahmad">Sarah Ahmad (HR Admin)</SelectItem>
+                              <SelectItem value="emp-michael-chen">Michael Chen (HR Coordinator)</SelectItem>
+                              <SelectItem value="emp-david-kim">David Kim (IT Admin)</SelectItem>
+                              <SelectItem value="emp-emily-rodriguez">Emily Rodriguez (Manager)</SelectItem>
+                              <SelectItem value="emp-james-wilson">James Wilson (Finance Admin)</SelectItem>
+                              <SelectItem value="emp-lisa-patel">Lisa Patel (Operations Coordinator)</SelectItem>
+                              <SelectItem value="emp-john-smith">John Smith (IT Specialist)</SelectItem>
+                              <SelectItem value="emp-maria-garcia">Maria Garcia (Marketing Executive)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {questionnairePic && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                              <MessageSquare className="w-4 h-4" />
+                              <span>Assigned to: <strong>{questionnairePic.startsWith('dept-') ? questionnairePic.replace('dept-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : questionnairePic.startsWith('desig-') ? questionnairePic.replace('desig-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : questionnairePic.replace('emp-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></span>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
+                  )}
+
+                  {/* General Task Configuration - Only show for General task type */}
+                  {formData.taskType === "general" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-gray-600" />
+                            <Label>General Task Configuration</Label>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Configure the person responsible for this general task
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Assigned Person in Charge for General Task */}
+                      <div className="space-y-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <Label htmlFor="generalPic" className="text-sm font-medium">Assigned Person in Charge (PIC) *</Label>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Select the person responsible for updating this general task as completed
+                        </p>
+                        <Select
+                          value={generalPic}
+                          onValueChange={setGeneralPic}
+                        >
+                          <SelectTrigger id="generalPic">
+                            <SelectValue placeholder="Select PIC responsible for this general task" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {/* Department Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                              Department
+                            </div>
+                            <SelectItem value="dept-hr">Human Resources</SelectItem>
+                            <SelectItem value="dept-it">Information Technology</SelectItem>
+                            <SelectItem value="dept-finance">Finance & Accounting</SelectItem>
+                            <SelectItem value="dept-operations">Operations</SelectItem>
+                            <SelectItem value="dept-marketing">Marketing</SelectItem>
+                            <SelectItem value="dept-sales">Sales</SelectItem>
+
+                            {/* Designation Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Designation
+                            </div>
+                            <SelectItem value="desig-manager">Manager</SelectItem>
+                            <SelectItem value="desig-supervisor">Supervisor</SelectItem>
+                            <SelectItem value="desig-coordinator">Coordinator</SelectItem>
+                            <SelectItem value="desig-specialist">Specialist</SelectItem>
+                            <SelectItem value="desig-admin">Admin</SelectItem>
+                            <SelectItem value="desig-executive">Executive</SelectItem>
+
+                            {/* Employee Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Employee
+                            </div>
+                            <SelectItem value="emp-sarah-ahmad">Sarah Ahmad (HR Admin)</SelectItem>
+                            <SelectItem value="emp-michael-chen">Michael Chen (HR Coordinator)</SelectItem>
+                            <SelectItem value="emp-david-kim">David Kim (IT Admin)</SelectItem>
+                            <SelectItem value="emp-emily-rodriguez">Emily Rodriguez (Manager)</SelectItem>
+                            <SelectItem value="emp-james-wilson">James Wilson (Finance Admin)</SelectItem>
+                            <SelectItem value="emp-lisa-patel">Lisa Patel (Operations Coordinator)</SelectItem>
+                            <SelectItem value="emp-john-smith">John Smith (IT Specialist)</SelectItem>
+                            <SelectItem value="emp-maria-garcia">Maria Garcia (Marketing Executive)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {generalPic && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                            <FileText className="w-4 h-4" />
+                            <span>Assigned to: <strong>{generalPic.startsWith('dept-') ? generalPic.replace('dept-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : generalPic.startsWith('desig-') ? generalPic.replace('desig-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : generalPic.replace('emp-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Meeting/Event Configuration - Only show for Meeting/Event task type */}
+                  {formData.taskType === "meeting" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-amber-600" />
+                            <Label>Meeting/Event Configuration</Label>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Configure the person responsible for this meeting or event task
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Assigned Person in Charge for Meeting/Event Task */}
+                      <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <Label htmlFor="meetingPic" className="text-sm font-medium">Assigned Person in Charge (PIC) *</Label>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Select the person responsible for updating this meeting/event task as completed
+                        </p>
+                        <Select
+                          value={meetingPic}
+                          onValueChange={setMeetingPic}
+                        >
+                          <SelectTrigger id="meetingPic">
+                            <SelectValue placeholder="Select PIC responsible for this meeting/event task" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {/* Department Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                              Department
+                            </div>
+                            <SelectItem value="dept-hr">Human Resources</SelectItem>
+                            <SelectItem value="dept-it">Information Technology</SelectItem>
+                            <SelectItem value="dept-finance">Finance & Accounting</SelectItem>
+                            <SelectItem value="dept-operations">Operations</SelectItem>
+                            <SelectItem value="dept-marketing">Marketing</SelectItem>
+                            <SelectItem value="dept-sales">Sales</SelectItem>
+
+                            {/* Designation Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Designation
+                            </div>
+                            <SelectItem value="desig-manager">Manager</SelectItem>
+                            <SelectItem value="desig-supervisor">Supervisor</SelectItem>
+                            <SelectItem value="desig-coordinator">Coordinator</SelectItem>
+                            <SelectItem value="desig-specialist">Specialist</SelectItem>
+                            <SelectItem value="desig-admin">Admin</SelectItem>
+                            <SelectItem value="desig-executive">Executive</SelectItem>
+
+                            {/* Employee Section */}
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b mt-2">
+                              Employee
+                            </div>
+                            <SelectItem value="emp-sarah-ahmad">Sarah Ahmad (HR Admin)</SelectItem>
+                            <SelectItem value="emp-michael-chen">Michael Chen (HR Coordinator)</SelectItem>
+                            <SelectItem value="emp-david-kim">David Kim (IT Admin)</SelectItem>
+                            <SelectItem value="emp-emily-rodriguez">Emily Rodriguez (Manager)</SelectItem>
+                            <SelectItem value="emp-james-wilson">James Wilson (Finance Admin)</SelectItem>
+                            <SelectItem value="emp-lisa-patel">Lisa Patel (Operations Coordinator)</SelectItem>
+                            <SelectItem value="emp-john-smith">John Smith (IT Specialist)</SelectItem>
+                            <SelectItem value="emp-maria-garcia">Maria Garcia (Marketing Executive)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {meetingPic && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>Assigned to: <strong>{meetingPic.startsWith('dept-') ? meetingPic.replace('dept-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : meetingPic.startsWith('desig-') ? meetingPic.replace('desig-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : meetingPic.replace('emp-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

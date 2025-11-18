@@ -21,7 +21,11 @@ import {
   ClipboardList,
   Building2,
   ChevronDown,
-  X
+  X,
+  Bell,
+  User,
+  Tag,
+  Layers
 } from "lucide-react";
 import {
   Table,
@@ -58,6 +62,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { getWorkflowsByCategory, getWorkflowById } from "../../utils/workflowData";
+import { toast } from "sonner";
 
 const companies = [
   { id: "timetec-cloud", name: "TimeTec Cloud" },
@@ -504,6 +509,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   });
   const [isEmployeeTasksDrawerOpen, setIsEmployeeTasksDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<typeof allNewHires[0] | null>(null);
+  const [isOverdueTaskDrawerOpen, setIsOverdueTaskDrawerOpen] = useState(false);
+  const [selectedOverdueTask, setSelectedOverdueTask] = useState<typeof allTasksData[0] | null>(null);
 
   const toggleCompany = (companyId: string) => {
     setSelectedCompanies(prev =>
@@ -865,7 +872,14 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
               {overdueTasks.total > 0 ? (
                 <div className="space-y-2">
                   {overdueTasks.tasks.slice(0, 3).map((task) => (
-                    <div key={task.id} className="p-2 rounded-lg bg-red-50 border border-red-200">
+                    <div
+                      key={task.id}
+                      className="p-2 rounded-lg bg-red-50 border border-red-200 cursor-pointer hover:bg-red-100 transition-colors"
+                      onClick={() => {
+                        setSelectedOverdueTask(task);
+                        setIsOverdueTaskDrawerOpen(true);
+                      }}
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-red-900">{task.task}</p>
@@ -873,6 +887,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                             Assignee: {task.assignee} • Due: {task.due}
                           </p>
                         </div>
+                        <Eye className="w-4 h-4 text-red-600 flex-shrink-0 ml-2" />
                       </div>
                     </div>
                   ))}
@@ -1426,6 +1441,200 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 Assign Workflow
               </Button>
             </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Overdue Task Details Drawer */}
+      <Sheet open={isOverdueTaskDrawerOpen} onOpenChange={setIsOverdueTaskDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              Overdue Task Details
+            </SheetTitle>
+            <SheetDescription>
+              Review task information and send reminders to responsible parties
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            {selectedOverdueTask && (
+              <>
+                {/* Task Header Card */}
+                <Card className="bg-red-50 border-red-200">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-red-900">
+                          {selectedOverdueTask.task}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-2">
+                          <StatusChip status={selectedOverdueTask.status} />
+                          <Badge variant="outline" className="text-xs">
+                            {selectedOverdueTask.type}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Overdue Alert */}
+                      <div className="flex items-start gap-2 p-3 bg-red-100 border border-red-300 rounded-lg">
+                        <Clock className="w-4 h-4 text-red-700 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-red-900">Task is Overdue</p>
+                          <p className="text-xs text-red-700 mt-1">
+                            Due date was {selectedOverdueTask.due}. Immediate action required.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Task Information Grid */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Task Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Person in Charge */}
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <User className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-muted-foreground">Assigned Person in Charge (PIC)</p>
+                        <p className="text-base font-semibold mt-1">{selectedOverdueTask.assignedTo}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          The person responsible for updating this task as completed
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stage */}
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Layers className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-muted-foreground">Onboarding Stage</p>
+                        <Badge
+                          className={`mt-1 ${
+                            selectedOverdueTask.stage === "Pre-Onboarding"
+                              ? "bg-purple-100 text-purple-800"
+                              : selectedOverdueTask.stage === "1st Day-Onboarding"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {selectedOverdueTask.stage}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Reminder Actions */}
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Bell className="w-5 h-5 text-blue-600" />
+                      Send Reminder
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Send a reminder notification to nudge the responsible party to complete this overdue task.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Remind New Hire */}
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start border-blue-300 hover:bg-blue-100"
+                        onClick={() => {
+                          toast.success("Reminder Sent!", {
+                            description: `A notification has been sent to ${selectedOverdueTask.assignee} about the overdue task: "${selectedOverdueTask.task}"`,
+                            duration: 5000,
+                          });
+                        }}
+                      >
+                        <Bell className="w-4 h-4 mr-2" />
+                        <div className="text-left flex-1">
+                          <div className="font-medium text-sm">Nudge New Hire</div>
+                          <div className="text-xs text-muted-foreground">{selectedOverdueTask.assignee}</div>
+                        </div>
+                      </Button>
+
+                      {/* Remind PIC */}
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start border-purple-300 hover:bg-purple-100"
+                        onClick={() => {
+                          toast.success("Reminder Sent!", {
+                            description: `A notification has been sent to ${selectedOverdueTask.assignedTo} (PIC) about the overdue task: "${selectedOverdueTask.task}"`,
+                            duration: 5000,
+                          });
+                        }}
+                      >
+                        <Bell className="w-4 h-4 mr-2" />
+                        <div className="text-left flex-1">
+                          <div className="font-medium text-sm">Nudge PIC</div>
+                          <div className="text-xs text-muted-foreground">{selectedOverdueTask.assignedTo}</div>
+                        </div>
+                      </Button>
+
+                      {/* Remind Both */}
+                      <Button
+                        className="w-full sm:col-span-2 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => {
+                          toast.success("Reminders Sent!", {
+                            description: `Notifications have been sent to both ${selectedOverdueTask.assignee} and ${selectedOverdueTask.assignedTo} about the overdue task: "${selectedOverdueTask.task}"`,
+                            duration: 5000,
+                          });
+                        }}
+                      >
+                        <Bell className="w-4 h-4 mr-2" />
+                        Send Reminder to Both Parties
+                      </Button>
+                    </div>
+
+                    {/* Info Box */}
+                    <div className="flex items-start gap-2 p-3 bg-blue-100 border border-blue-200 rounded-lg mt-4">
+                      <AlertTriangle className="w-4 h-4 text-blue-700 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-blue-900">
+                          <strong>Reminder Policy:</strong> Reminders will be sent via email and in-app notification.
+                          For tasks overdue by more than 3 days, consider escalating to the employee's manager.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setIsOverdueTaskDrawerOpen(false);
+                      setSelectedOverdueTask(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => {
+                      // TODO: Implement mark as completed logic
+                      toast.success("Task Updated", {
+                        description: `Task "${selectedOverdueTask.task}" has been marked for review`,
+                        duration: 3000,
+                      });
+                    }}
+                  >
+                    Mark for Review
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </SheetContent>
       </Sheet>
