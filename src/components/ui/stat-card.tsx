@@ -23,9 +23,9 @@ interface StatCardProps {
 
 const variantClasses = {
   default: "bg-card",
-  primary: "bg-primary text-primary-foreground",
+  primary: "bg-blue-600 text-white",
   success: "bg-green-500 text-white",
-  warning: "bg-amber-500 text-white", 
+  warning: "bg-orange-500 text-white",
   danger: "bg-red-500 text-white"
 };
 
@@ -88,26 +88,26 @@ export function StatCard({
   }
 
   return (
-    <Card className={cn(variantClasses[variant], className)}>
+    <Card className={cn("border-none shadow-sm rounded-xl overflow-hidden", variantClasses[variant], className)}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <p className={cn(
-              "text-sm font-medium",
-              variant === "default" ? "text-muted-foreground" : "text-current opacity-90"
+              "text-sm font-medium mb-2",
+              variant === "default" ? "text-muted-foreground" : "text-white opacity-90"
             )}>
               {title}
             </p>
-            <div className="flex items-baseline gap-2 mt-2">
-              <p className="text-2xl font-semibold">{value}</p>
+            <div className="flex items-baseline gap-2">
+              <p className={cn("text-4xl font-bold", variant !== "default" && "text-white")}>{value}</p>
               {delta && (
                 <span className={cn(
                   "text-sm",
-                  variant === "default" 
-                    ? delta.trend === "up" 
-                      ? "text-green-600" 
-                      : delta.trend === "down" 
-                        ? "text-red-600" 
+                  variant === "default"
+                    ? delta.trend === "up"
+                      ? "text-green-600"
+                      : delta.trend === "down"
+                        ? "text-red-600"
                         : "text-muted-foreground"
                     : "text-current opacity-75"
                 )}>
@@ -133,10 +133,10 @@ export function StatCard({
             )}
           </div>
           <div className={cn(
-            "w-12 h-12 rounded-lg flex items-center justify-center",
+            "w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0",
             iconVariantClasses[variant]
           )}>
-            <Icon className="w-6 h-6" />
+            <Icon className="w-7 h-7" />
           </div>
         </div>
         {progress && (

@@ -25,7 +25,9 @@ import {
   Bell,
   User,
   Tag,
-  Layers
+  Layers,
+  ArrowLeft,
+  ExternalLink
 } from "lucide-react";
 import {
   Table,
@@ -511,6 +513,14 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   const [selectedEmployee, setSelectedEmployee] = useState<typeof allNewHires[0] | null>(null);
   const [isOverdueTaskDrawerOpen, setIsOverdueTaskDrawerOpen] = useState(false);
   const [selectedOverdueTask, setSelectedOverdueTask] = useState<typeof allTasksData[0] | null>(null);
+  const [showProgressByNewHire, setShowProgressByNewHire] = useState(false);
+  const [progressViewTab, setProgressViewTab] = useState("by-employee");
+  const [taskStageTab, setTaskStageTab] = useState("pre-onboarding");
+
+  // Progress by New Hire page filters
+  const [progressSearchQuery, setProgressSearchQuery] = useState("");
+  const [progressStageFilter, setProgressStageFilter] = useState("all");
+  const [progressStatusFilter, setProgressStatusFilter] = useState("all");
 
   const toggleCompany = (companyId: string) => {
     setSelectedCompanies(prev =>
@@ -589,6 +599,40 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
     return filteredNewHires.filter(hire => hire.currentStage === selectedStageFilter);
   }, [filteredNewHires, selectedStageFilter]);
 
+  // Apply all filters for Progress by New Hire page
+  const progressFilteredNewHires = useMemo(() => {
+    let result = filteredNewHires;
+
+    // Apply search query
+    if (progressSearchQuery.trim()) {
+      const query = progressSearchQuery.toLowerCase();
+      result = result.filter(hire =>
+        hire.name.toLowerCase().includes(query) ||
+        hire.manager.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply stage filter
+    if (progressStageFilter !== "all") {
+      const stageMap: Record<string, string> = {
+        "pre-onboarding": "Pre-Onboarding",
+        "first-day": "1st Day-Onboarding",
+        "next-day": "Next Day-Onboarding"
+      };
+      const mappedStage = stageMap[progressStageFilter];
+      if (mappedStage) {
+        result = result.filter(hire => hire.currentStage === mappedStage);
+      }
+    }
+
+    // Apply status filter
+    if (progressStatusFilter !== "all") {
+      result = result.filter(hire => hire.status === progressStatusFilter);
+    }
+
+    return result;
+  }, [filteredNewHires, progressSearchQuery, progressStageFilter, progressStatusFilter]);
+
   const filteredTasks = useMemo(() => {
     return allTasksData.filter(task => selectedCompanies.includes(task.company));
   }, [selectedCompanies]);
@@ -663,6 +707,438 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
         : 0
     };
   }, [filteredTasks, currentUserRole]);
+
+  // Render Progress by New Hire page if showProgressByNewHire is true
+  if (showProgressByNewHire) {
+    return (
+      <div className="p-6 space-y-6">
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowProgressByNewHire(false);
+                // Reset filters when going back
+                setProgressSearchQuery("");
+                setProgressStageFilter("all");
+                setProgressStatusFilter("all");
+              }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">Onboarding Progress</h1>
+              <p className="text-muted-foreground">Comprehensive view of all new hires and their onboarding progress</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Companies ({selectedCompanies.length})
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="end">
+                <div className="space-y-3">
+                  <div className="font-medium text-sm">Select Companies</div>
+                  {companies.map((company) => (
+                    <div key={company.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={company.id}
+                        checked={selectedCompanies.includes(company.id)}
+                        onCheckedChange={() => toggleCompany(company.id)}
+                      />
+                      <label
+                        htmlFor={company.id}
+                        className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {company.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Comprehensive New Hires List with Tabs */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-end">
+              <Tabs value={progressViewTab} onValueChange={setProgressViewTab}>
+                <TabsList>
+                  <TabsTrigger value="by-employee">By Employee</TabsTrigger>
+                  <TabsTrigger value="by-task">By Task</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={progressViewTab} onValueChange={setProgressViewTab}>
+              <TabsContent value="by-employee" className="space-y-4">
+                {/* Filter & Search for By Employee */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium">Filter & Search</h3>
+                    {(progressSearchQuery || progressStageFilter !== "all" || progressStatusFilter !== "all") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setProgressSearchQuery("");
+                          setProgressStageFilter("all");
+                          setProgressStatusFilter("all");
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Search by employee name or manager..."
+                        value={progressSearchQuery}
+                        onChange={(e) => setProgressSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Select value={progressStageFilter} onValueChange={setProgressStageFilter}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="All Stages" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Stages</SelectItem>
+                        <SelectItem value="pre-onboarding">Pre-Onboarding</SelectItem>
+                        <SelectItem value="first-day">1st Day-Onboarding</SelectItem>
+                        <SelectItem value="next-day">Next Day-Onboarding</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={progressStatusFilter} onValueChange={setProgressStatusFilter}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="not-started">Not Started</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employee Name</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Reporting Manager</TableHead>
+                      <TableHead>Start Date</TableHead>
+                      <TableHead>Current Stage</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead>Tasks Completed</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {progressFilteredNewHires.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          No new hires match the selected filters
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      progressFilteredNewHires.map((hire) => (
+                      <TableRow key={hire.id} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell className="font-medium">{hire.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {companies.find(c => c.id === hire.company)?.name}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{hire.manager}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                            {hire.startDate}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              hire.currentStage === "Pre-Onboarding"
+                                ? "bg-purple-100 text-purple-800"
+                                : hire.currentStage === "1st Day-Onboarding"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }
+                          >
+                            {hire.currentStage}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={hire.progress} className="w-24" />
+                            <span className="text-sm font-medium">{hire.progress}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">
+                            {hire.completedTasks} / {hire.totalTasks}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={hire.status} />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedEmployee(hire);
+                              setIsEmployeeTasksDrawerOpen(true);
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View Tasks
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+
+              <TabsContent value="by-task" className="space-y-4">
+                {/* Filter & Search for By Task */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium">Filter & Search</h3>
+                    {(progressSearchQuery || progressStatusFilter !== "all") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setProgressSearchQuery("");
+                          setProgressStatusFilter("all");
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Search by task name..."
+                        value={progressSearchQuery}
+                        onChange={(e) => setProgressSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Select value={progressStatusFilter} onValueChange={setProgressStatusFilter}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Stage Tabs */}
+                <Tabs value={taskStageTab} onValueChange={setTaskStageTab}>
+                  <TabsList>
+                    <TabsTrigger value="pre-onboarding">Pre-Onboarding</TabsTrigger>
+                    <TabsTrigger value="first-day">1st Day-Onboarding</TabsTrigger>
+                    <TabsTrigger value="next-day">Next Day-Onboarding</TabsTrigger>
+                  </TabsList>
+
+                  {/* Pre-Onboarding Tasks */}
+                  <TabsContent value="pre-onboarding">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Company</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTasks.filter(t => t.stage === "Pre-Onboarding").length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                              No Pre-Onboarding tasks found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredTasks.filter(t => t.stage === "Pre-Onboarding").map((task) => (
+                          <TableRow key={task.id} className="hover:bg-muted/50">
+                            <TableCell className="font-medium">{task.task}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {task.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {companies.find(c => c.id === task.company)?.name}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const employee = progressFilteredNewHires.find(h => h.name === task.assignee);
+                                  if (employee) {
+                                    setSelectedEmployee(employee);
+                                    setIsEmployeeTasksDrawerOpen(true);
+                                  }
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+
+                  {/* 1st Day-Onboarding Tasks */}
+                  <TabsContent value="first-day">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Company</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTasks.filter(t => t.stage === "1st Day-Onboarding").length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                              No 1st Day-Onboarding tasks found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredTasks.filter(t => t.stage === "1st Day-Onboarding").map((task) => (
+                          <TableRow key={task.id} className="hover:bg-muted/50">
+                            <TableCell className="font-medium">{task.task}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {task.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {companies.find(c => c.id === task.company)?.name}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const employee = progressFilteredNewHires.find(h => h.name === task.assignee);
+                                  if (employee) {
+                                    setSelectedEmployee(employee);
+                                    setIsEmployeeTasksDrawerOpen(true);
+                                  }
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+
+                  {/* Next Day-Onboarding Tasks */}
+                  <TabsContent value="next-day">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Company</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTasks.filter(t => t.stage === "Next Day-Onboarding").length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                              No Next Day-Onboarding tasks found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredTasks.filter(t => t.stage === "Next Day-Onboarding").map((task) => (
+                          <TableRow key={task.id} className="hover:bg-muted/50">
+                            <TableCell className="font-medium">{task.task}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {task.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {companies.find(c => c.id === task.company)?.name}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const employee = progressFilteredNewHires.find(h => h.name === task.assignee);
+                                  if (employee) {
+                                    setSelectedEmployee(employee);
+                                    setIsEmployeeTasksDrawerOpen(true);
+                                  }
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -951,7 +1427,15 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
         <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Progress by New Hire</CardTitle>
+                  <div
+                    className="flex items-center gap-2 cursor-pointer group"
+                    onClick={() => setShowProgressByNewHire(true)}
+                  >
+                    <CardTitle className="group-hover:text-blue-600 transition-colors">
+                      Onboarding Progress
+                    </CardTitle>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-blue-600 transition-colors" />
+                  </div>
                   {selectedStageFilter && (
                     <Button
                       variant="outline"
@@ -1740,9 +2224,28 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <Calendar className="w-3.5 h-3.5" />
-                                  <span>Due: {task.dueDate}</span>
+                                  <span>Due: {task.due}</span>
                                 </div>
                               </div>
+                              {/* Nudge Button */}
+                              {task.status !== "completed" && (
+                                <div className="mt-3 pt-3 border-t">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full border-blue-300 hover:bg-blue-50"
+                                    onClick={() => {
+                                      toast.success("Reminder Sent!", {
+                                        description: `A notification has been sent to ${task.assignedTo} about the task: "${task.task}"`,
+                                        duration: 5000,
+                                      });
+                                    }}
+                                  >
+                                    <Bell className="w-4 h-4 mr-2" />
+                                    Nudge {task.assignedTo}
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </CardContent>
