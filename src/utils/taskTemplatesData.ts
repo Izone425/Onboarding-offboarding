@@ -1,3 +1,11 @@
+export interface RequiredDocument {
+  id: string;
+  name: string;
+  description?: string;
+  mandatory: boolean;
+  category: "personal" | "financial" | "medical" | "legal" | "other";
+}
+
 export interface TaskTemplate {
   id: string;
   name: string;
@@ -11,6 +19,7 @@ export interface TaskTemplate {
   description?: string;
   url?: string;
   isActive?: boolean;
+  requiredDocuments?: RequiredDocument[];
 }
 
 export const taskTemplates: TaskTemplate[] = [
@@ -152,7 +161,107 @@ export const taskTemplates: TaskTemplate[] = [
     lastUpdated: "2025-08-25",
     description: "Comprehensive employee information collection form requiring personal details, emergency contacts, banking information, and essential document uploads. This form collects all necessary information for payroll setup, emergency procedures, and regulatory compliance including IC/Passport, medical certificates, and financial documents.",
     url: "https://forms.company.com/employee-information",
-    isActive: true
+    isActive: true,
+    requiredDocuments: [
+      {
+        id: "ic-passport",
+        name: "IC / Passport Copy",
+        description: "Clear, colored copy of Malaysian Identity Card (both sides) or Passport (photo page and visa page for foreign nationals)",
+        mandatory: true,
+        category: "personal"
+      },
+      {
+        id: "birth-certificate",
+        name: "Birth Certificate",
+        description: "Original birth certificate or certified true copy",
+        mandatory: true,
+        category: "legal"
+      },
+      {
+        id: "marriage-certificate",
+        name: "Marriage Certificate (if applicable)",
+        description: "Marriage certificate for married employees claiming dependent benefits",
+        mandatory: false,
+        category: "legal"
+      },
+      {
+        id: "children-birth-cert",
+        name: "Children's Birth Certificates (if applicable)",
+        description: "Birth certificates for all dependent children for tax and benefits purposes",
+        mandatory: false,
+        category: "legal"
+      },
+      {
+        id: "bank-statement",
+        name: "Bank Statement / Passbook Copy",
+        description: "Recent bank statement or passbook showing account number and account holder name (within last 3 months)",
+        mandatory: true,
+        category: "financial"
+      },
+      {
+        id: "epf-statement",
+        name: "EPF Statement",
+        description: "Latest EPF (Employees Provident Fund) statement showing member number",
+        mandatory: true,
+        category: "financial"
+      },
+      {
+        id: "socso-number",
+        name: "SOCSO Number Confirmation",
+        description: "SOCSO (Social Security Organization) registration number confirmation",
+        mandatory: true,
+        category: "financial"
+      },
+      {
+        id: "income-tax-number",
+        name: "Income Tax Number",
+        description: "Malaysian Income Tax Number (if registered with LHDN)",
+        mandatory: false,
+        category: "financial"
+      },
+      {
+        id: "educational-certs",
+        name: "Educational Certificates",
+        description: "Copies of highest educational qualification certificates and transcripts",
+        mandatory: true,
+        category: "personal"
+      },
+      {
+        id: "professional-certs",
+        name: "Professional Certificates / Licenses",
+        description: "Relevant professional certifications, licenses, or memberships required for the position",
+        mandatory: false,
+        category: "personal"
+      },
+      {
+        id: "medical-report",
+        name: "Medical Examination Report",
+        description: "Pre-employment medical examination report from certified medical practitioner",
+        mandatory: true,
+        category: "medical"
+      },
+      {
+        id: "vaccination-cert",
+        name: "Vaccination Certificate",
+        description: "COVID-19 vaccination certificate or other required vaccinations",
+        mandatory: false,
+        category: "medical"
+      },
+      {
+        id: "passport-photo",
+        name: "Passport-sized Photographs",
+        description: "4 recent passport-sized photographs with white background",
+        mandatory: true,
+        category: "personal"
+      },
+      {
+        id: "previous-employment",
+        name: "Previous Employment Documents",
+        description: "Reference letters, resignation letter, or release letter from previous employer",
+        mandatory: false,
+        category: "other"
+      }
+    ]
   },
   {
     id: "payroll-setup-form",

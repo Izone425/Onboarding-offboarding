@@ -27,7 +27,12 @@ import {
   Tag,
   Layers,
   ArrowLeft,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  RotateCcw,
+  Plus,
+  FileCheck,
+  Info
 } from "lucide-react";
 import {
   Table,
@@ -44,6 +49,13 @@ import {
   PopoverTrigger,
 } from "../ui/popover";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -56,20 +68,22 @@ import {
   SheetHeader,
   SheetTitle,
 } from "../ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { getWorkflowsByCategory, getWorkflowById } from "../../utils/workflowData";
+import { getTaskTemplatesByIndicator, taskTemplates } from "../../utils/taskTemplatesData";
 import { toast } from "sonner";
 
 const companies = [
   { id: "timetec-cloud", name: "TimeTec Cloud" },
   { id: "timetec-computing", name: "TimeTec Computing" },
   { id: "fingertech", name: "FingerTec" },
+];
+
+// Trigger options for task assignment
+const triggerOptions = [
+  { value: "hire_date", label: "On Hire Date", description: "Starts on the employee's hire date" },
+  { value: "confirmed_status", label: "On Confirmed Staff Status", description: "Starts when employee status is confirmed" },
+  { value: "previous_task", label: "After Previous Task Completed", description: "Starts after the previous task is completed" },
+  { value: "date_offset", label: "Date Offset", description: "Starts on a specific date offset" },
 ];
 
 // Company-specific new hires data
@@ -216,7 +230,7 @@ const allTasksData = [
   },
   {
     id: 5,
-    task: "Document Collection",
+    task: "Employee Information & Document Collection",
     assignee: "Aina Zulkifli",
     due: "2025-09-17",
     type: "Information/Document",
@@ -224,7 +238,8 @@ const allTasksData = [
     status: "completed" as const,
     assignedTo: "Staff",
     stage: "Pre-Onboarding" as const,
-    company: "timetec-cloud"
+    company: "timetec-cloud",
+    templateId: "employee-information-form"
   },
   {
     id: 6,
@@ -514,8 +529,15 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   const [isOverdueTaskDrawerOpen, setIsOverdueTaskDrawerOpen] = useState(false);
   const [selectedOverdueTask, setSelectedOverdueTask] = useState<typeof allTasksData[0] | null>(null);
   const [showProgressByNewHire, setShowProgressByNewHire] = useState(false);
+  const [showEmployeeTasksPage, setShowEmployeeTasksPage] = useState(false);
   const [progressViewTab, setProgressViewTab] = useState("by-employee");
   const [taskStageTab, setTaskStageTab] = useState("pre-onboarding");
+  const [isAddTaskDrawerOpen, setIsAddTaskDrawerOpen] = useState(false);
+  const [selectedTaskTemplate, setSelectedTaskTemplate] = useState<string>("");
+  const [selectedStage, setSelectedStage] = useState<string>("");
+  const [selectedTrigger, setSelectedTrigger] = useState<string>("");
+  const [isTaskDetailsDrawerOpen, setIsTaskDetailsDrawerOpen] = useState(false);
+  const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<typeof allTasksData[0] | null>(null);
 
   // Progress by New Hire page filters
   const [progressSearchQuery, setProgressSearchQuery] = useState("");
@@ -708,6 +730,448 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
     };
   }, [filteredTasks, currentUserRole]);
 
+  // Get onboarding task templates
+  const onboardingTaskTemplates = getTaskTemplatesByIndicator("onboarding");
+
+  // Handle add task
+  const handleAddTask = () => {
+    if (!selectedTaskTemplate || !selectedStage || !selectedTrigger) {
+      toast.error("Please select task template, stage, and trigger");
+      return;
+    }
+
+    const template = onboardingTaskTemplates.find(t => t.id === selectedTaskTemplate);
+    const trigger = triggerOptions.find(t => t.value === selectedTrigger);
+
+    if (template && trigger) {
+      toast.success("Task Added!", {
+        description: `"${template.name}" has been added to ${selectedStage} with trigger "${trigger.label}"`,
+        duration: 3000,
+      });
+
+      // Reset form and close drawer
+      setSelectedTaskTemplate("");
+      setSelectedStage("");
+      setSelectedTrigger("");
+      setIsAddTaskDrawerOpen(false);
+    }
+  };
+
+  // Render Employee Tasks page if showEmployeeTasksPage is true
+  if (showEmployeeTasksPage && selectedEmployee) {
+    return (
+      <div className="p-4 space-y-4">
+        {/* Header with Back Button and Add Task */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowEmployeeTasksPage(false);
+                setSelectedEmployee(null);
+              }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Progress
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">Tasks for {selectedEmployee.name}</h1>
+              <p className="text-sm text-muted-foreground">View and manage all onboarding tasks assigned to this employee</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setIsAddTaskDrawerOpen(true)}
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Task
+          </Button>
+        </div>
+
+        {/* Employee Summary Card */}
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground">Reporting Manager</p>
+                <p className="text-sm font-medium">{selectedEmployee.manager}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground">Current Stage</p>
+                <Badge variant="outline" className="text-xs">{selectedEmployee.currentStage}</Badge>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground">Overall Progress</p>
+                <div className="flex items-center gap-2">
+                  <Progress value={selectedEmployee.progress} className="w-24" />
+                  <span className="text-xs font-medium">{selectedEmployee.progress}%</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tasks grouped by stage */}
+        <div className="grid gap-3 w-full" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          {["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"].map(stage => {
+            const stageTasks = allTasksData.filter(
+              task => task.assignee === selectedEmployee.name && task.stage === stage
+            );
+
+            return (
+              <Card key={stage} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">
+                      {stage}
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {stageTasks.length}
+                      </Badge>
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {stageTasks.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-3">No tasks</p>
+                    ) : (
+                      stageTasks.map(task => (
+                      <Card
+                        key={task.id}
+                        className="border cursor-pointer hover:bg-accent/50 transition-colors"
+                        onClick={() => {
+                          setSelectedTaskForDetails(task);
+                          setIsTaskDetailsDrawerOpen(true);
+                        }}
+                      >
+                        <CardContent className="p-2">
+                          {/* Task Header with Title and Status */}
+                          <div className="flex items-start gap-2 mb-2">
+                            {task.status === "completed" ? (
+                              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                            ) : task.status === "overdue" ? (
+                              <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                            ) : (
+                              <Clock className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-medium truncate">{task.task}</h4>
+                            </div>
+                          </div>
+
+                          {/* Task Details */}
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline" className="text-xs">
+                                {task.type}
+                              </Badge>
+                              <StatusChip status={task.status} />
+                            </div>
+
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <User className="w-3 h-3" />
+                              <span>{task.assignedTo}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              <span>{task.due}</span>
+                            </div>
+                          </div>
+
+                          {/* Task Action Buttons */}
+                          {task.status !== "completed" ? (
+                            <div className="flex items-center justify-end gap-1 mt-2">
+                              <button
+                                type="button"
+                                className="w-7 h-7 rounded-full border border-blue-300 text-blue-600 hover:bg-blue-50 flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast.success("Reminder Sent!", {
+                                    description: `A notification has been sent to ${task.assignedTo} about the task: "${task.task}"`,
+                                    duration: 5000,
+                                  });
+                                }}
+                              >
+                                <Bell className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                className="w-7 h-7 rounded-full border border-green-600 text-green-600 hover:bg-green-50 flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast.success("Task Completed!", {
+                                    description: `Task "${task.task}" has been marked as completed`,
+                                    duration: 3000,
+                                  });
+                                }}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                className="w-7 h-7 rounded-full border border-red-300 text-red-600 hover:bg-red-50 flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast.success("Task Deleted!", {
+                                    description: `Task "${task.task}" has been deleted`,
+                                    duration: 3000,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-end mt-2">
+                              <button
+                                type="button"
+                                className="w-7 h-7 rounded-full border border-orange-300 text-orange-600 hover:bg-orange-50 flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast.success("Task Status Reset!", {
+                                    description: `Task "${task.task}" has been reset to pending status`,
+                                    duration: 3000,
+                                  });
+                                }}
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Add Task Drawer */}
+        <Sheet open={isAddTaskDrawerOpen} onOpenChange={setIsAddTaskDrawerOpen}>
+          <SheetContent className="sm:max-w-[500px]">
+            <SheetHeader>
+              <SheetTitle>Add Task to {selectedEmployee.name}</SheetTitle>
+              <SheetDescription>
+                Select a task template from the configuration and assign it to a specific stage.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="space-y-4 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="task-template">Task Template</Label>
+                <Select value={selectedTaskTemplate} onValueChange={setSelectedTaskTemplate}>
+                  <SelectTrigger id="task-template">
+                    <SelectValue placeholder="Select a task template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {onboardingTaskTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {template.type}
+                          </Badge>
+                          <span>{template.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stage">Onboarding Stage</Label>
+                <Select value={selectedStage} onValueChange={setSelectedStage}>
+                  <SelectTrigger id="stage">
+                    <SelectValue placeholder="Select a stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pre-Onboarding">Pre-Onboarding</SelectItem>
+                    <SelectItem value="1st Day-Onboarding">1st Day-Onboarding</SelectItem>
+                    <SelectItem value="Next Day-Onboarding">Next Day-Onboarding</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trigger">Trigger</Label>
+                <Select value={selectedTrigger} onValueChange={setSelectedTrigger}>
+                  <SelectTrigger id="trigger">
+                    <SelectValue placeholder="Select a trigger" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {triggerOptions.map((trigger) => (
+                      <SelectItem key={trigger.value} value={trigger.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{trigger.label}</span>
+                          <span className="text-xs text-muted-foreground">{trigger.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setIsAddTaskDrawerOpen(false);
+                  setSelectedTaskTemplate("");
+                  setSelectedStage("");
+                  setSelectedTrigger("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button className="flex-1" onClick={handleAddTask}>
+                Add Task
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Task Details Drawer */}
+        <Sheet open={isTaskDetailsDrawerOpen} onOpenChange={setIsTaskDetailsDrawerOpen}>
+          <SheetContent className="sm:max-w-[600px] overflow-y-auto">
+            {selectedTaskForDetails && (() => {
+              const taskTemplate = selectedTaskForDetails.templateId
+                ? taskTemplates.find(t => t.id === selectedTaskForDetails.templateId)
+                : null;
+
+              return (
+                <>
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <FileCheck className="w-5 h-5" />
+                      {selectedTaskForDetails.task}
+                    </SheetTitle>
+                    <SheetDescription>
+                      Task details and required documents
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <div className="space-y-6 py-6">
+                    {/* Task Information */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        Task Information
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Type:</span>
+                          <Badge variant="outline">{selectedTaskForDetails.type}</Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Assigned To:</span>
+                          <span className="font-medium">{selectedTaskForDetails.assignedTo}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Assignee:</span>
+                          <span className="font-medium">{selectedTaskForDetails.assignee}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Due Date:</span>
+                          <span className="font-medium">{selectedTaskForDetails.due}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Status:</span>
+                          <StatusChip status={selectedTaskForDetails.status} />
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Stage:</span>
+                          <Badge variant="outline">{selectedTaskForDetails.stage}</Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Task Description */}
+                    {taskTemplate?.description && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold">Description</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {taskTemplate.description}
+                        </p>
+                        {taskTemplate.url && (
+                          <a
+                            href={taskTemplate.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Open Task Form
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Required Documents */}
+                    {taskTemplate?.requiredDocuments && taskTemplate.requiredDocuments.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Required Documents ({taskTemplate.requiredDocuments.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {taskTemplate.requiredDocuments.map((doc) => (
+                            <Card key={doc.id} className="border">
+                              <CardContent className="p-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 mt-0.5">
+                                    {doc.mandatory ? (
+                                      <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                                        <span className="text-red-600 text-xs font-bold">*</span>
+                                      </div>
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <span className="text-gray-400 text-xs">○</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <h4 className="font-medium text-sm">{doc.name}</h4>
+                                      <Badge variant="outline" className="text-xs flex-shrink-0">
+                                        {doc.category}
+                                      </Badge>
+                                    </div>
+                                    {doc.description && (
+                                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                        {doc.description}
+                                      </p>
+                                    )}
+                                    {doc.mandatory && (
+                                      <p className="text-xs text-red-600 mt-1 font-medium">
+                                        Required
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-semibold">Note:</span> Documents marked with <span className="text-red-600 font-bold">*</span> are mandatory and must be submitted.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </SheetContent>
+        </Sheet>
+      </div>
+    );
+  }
+
   // Render Progress by New Hire page if showProgressByNewHire is true
   if (showProgressByNewHire) {
     return (
@@ -839,7 +1303,6 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                       <TableHead>Employee Name</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead>Reporting Manager</TableHead>
-                      <TableHead>Start Date</TableHead>
                       <TableHead>Current Stage</TableHead>
                       <TableHead>Progress</TableHead>
                       <TableHead>Tasks Completed</TableHead>
@@ -850,7 +1313,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   <TableBody>
                     {progressFilteredNewHires.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           No new hires match the selected filters
                         </TableCell>
                       </TableRow>
@@ -864,12 +1327,6 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                           </Badge>
                         </TableCell>
                         <TableCell>{hire.manager}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm">
-                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                            {hire.startDate}
-                          </div>
-                        </TableCell>
                         <TableCell>
                           <Badge
                             className={
@@ -903,7 +1360,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                             size="sm"
                             onClick={() => {
                               setSelectedEmployee(hire);
-                              setIsEmployeeTasksDrawerOpen(true);
+                              setShowEmployeeTasksPage(true);
                             }}
                           >
                             <Eye className="w-4 h-4 mr-1" />
@@ -1136,6 +1593,211 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Employee Tasks Drawer */}
+        <Sheet open={isEmployeeTasksDrawerOpen} onOpenChange={setIsEmployeeTasksDrawerOpen}>
+          <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Tasks for {selectedEmployee?.name}</SheetTitle>
+              <SheetDescription>
+                Viewing all assigned tasks across all onboarding stages
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="mt-6 space-y-4">
+              {selectedEmployee && (() => {
+                // Filter tasks by employee name (all stages)
+                const employeeTasks = filteredTasks.filter(
+                  task => task.assignee === selectedEmployee.name
+                );
+
+                // Group tasks by stage
+                const tasksByStage = {
+                  "Pre-Onboarding": employeeTasks.filter(t => t.stage === "Pre-Onboarding"),
+                  "1st Day-Onboarding": employeeTasks.filter(t => t.stage === "1st Day-Onboarding"),
+                  "Next Day-Onboarding": employeeTasks.filter(t => t.stage === "Next Day-Onboarding")
+                };
+
+                // Calculate overall progress
+                const completedTasksCount = employeeTasks.filter(task => task.status === "completed").length;
+                const totalTasksCount = employeeTasks.length;
+                const actualProgress = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
+                if (employeeTasks.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <CheckCircle className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground">No tasks assigned to this employee</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <>
+                    {/* Employee Info Card */}
+                    <Card className="bg-muted/50">
+                      <CardContent className="pt-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Manager</p>
+                            <p className="font-medium">{selectedEmployee.manager}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Start Date</p>
+                            <p className="font-medium">{selectedEmployee.startDate}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Current Stage</p>
+                            <Badge
+                              className={
+                                selectedEmployee.currentStage === "Pre-Onboarding"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : selectedEmployee.currentStage === "1st Day-Onboarding"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-green-100 text-green-800"
+                              }
+                            >
+                              {selectedEmployee.currentStage}
+                            </Badge>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Progress</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Progress value={actualProgress} className="w-20" />
+                              <span className="text-sm font-medium">{actualProgress}%</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {completedTasksCount} of {totalTasksCount} tasks completed
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Tasks List - Grouped by Stage */}
+                    <div className="space-y-6">
+                      {Object.entries(tasksByStage).map(([stage, tasks]) => {
+                        if (tasks.length === 0) return null;
+
+                        const stageColors = {
+                          "Pre-Onboarding": "bg-purple-100 text-purple-800 border-purple-200",
+                          "1st Day-Onboarding": "bg-blue-100 text-blue-800 border-blue-200",
+                          "Next Day-Onboarding": "bg-green-100 text-green-800 border-green-200"
+                        };
+
+                        return (
+                          <div key={stage} className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Badge className={stageColors[stage as keyof typeof stageColors]}>
+                                {stage}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                ({tasks.length} {tasks.length === 1 ? 'task' : 'tasks'})
+                              </span>
+                            </div>
+
+                            {tasks.map((task) => (
+                              <Card key={task.id}>
+                                <CardContent className="pt-4">
+                                  <div className="flex items-start gap-3">
+                                    {task.status === "completed" ? (
+                                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                    ) : task.status === "overdue" ? (
+                                      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                    ) : (
+                                      <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                                    )}
+                                    <div className="flex-1">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <h4 className="font-medium">{task.task}</h4>
+                                        <StatusChip status={task.status} />
+                                      </div>
+                                      <div className="mt-2 space-y-1">
+                                        <div className="flex items-center gap-2 text-sm">
+                                          <Badge variant="outline" className="text-xs">
+                                            {task.type}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                          <span>Assigned to:</span>
+                                          <span className="font-medium text-foreground">{task.assignedTo}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                          <Calendar className="w-3.5 h-3.5" />
+                                          <span>Due: {task.due}</span>
+                                        </div>
+                                      </div>
+                                      {/* Task Action Buttons */}
+                                      {task.status !== "completed" ? (
+                                        <div className="flex items-center justify-end gap-1.5 mt-2">
+                                          <button
+                                            type="button"
+                                            className="w-8 h-8 rounded-full border border-blue-300 text-blue-600 hover:bg-blue-50 flex items-center justify-center"
+                                            onClick={() => {
+                                              toast.success("Reminder Sent!", {
+                                                description: `A notification has been sent to ${task.assignedTo} about the task: "${task.task}"`,
+                                                duration: 5000,
+                                              });
+                                            }}
+                                          >
+                                            <Bell className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="w-8 h-8 rounded-full border border-green-600 text-green-600 hover:bg-green-50 flex items-center justify-center"
+                                            onClick={() => {
+                                              toast.success("Task Completed!", {
+                                                description: `Task "${task.task}" has been marked as completed`,
+                                                duration: 3000,
+                                              });
+                                            }}
+                                          >
+                                            <CheckCircle className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="w-8 h-8 rounded-full border border-red-300 text-red-600 hover:bg-red-50 flex items-center justify-center"
+                                            onClick={() => {
+                                              toast.success("Task Deleted!", {
+                                                description: `Task "${task.task}" has been deleted`,
+                                                duration: 3000,
+                                              });
+                                            }}
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center justify-end mt-2">
+                                          <button
+                                            type="button"
+                                            className="w-8 h-8 rounded-full border border-orange-300 text-orange-600 hover:bg-orange-50 flex items-center justify-center"
+                                            onClick={() => {
+                                              toast.success("Task Status Reset!", {
+                                                description: `Task "${task.task}" has been reset to pending status`,
+                                                duration: 3000,
+                                              });
+                                            }}
+                                          >
+                                            <RotateCcw className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }
@@ -1621,9 +2283,21 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                           <Button variant="ghost" size="sm">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
+                          {task.status !== "completed" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => {
+                                toast.success("Task Completed!", {
+                                  description: `Task "${task.task}" has been marked as completed`,
+                                  duration: 3000,
+                                });
+                              }}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1684,9 +2358,21 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                               <Button variant="ghost" size="sm">
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
-                                <CheckCircle className="w-4 h-4" />
-                              </Button>
+                              {task.status !== "completed" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => {
+                                    toast.success("Task Completed!", {
+                                      description: `Task "${task.task}" has been marked as completed`,
+                                      duration: 3000,
+                                    });
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1743,9 +2429,21 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                               <Button variant="ghost" size="sm">
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
-                                <CheckCircle className="w-4 h-4" />
-                              </Button>
+                              {task.status !== "completed" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => {
+                                    toast.success("Task Completed!", {
+                                      description: `Task "${task.task}" has been marked as completed`,
+                                      duration: 3000,
+                                    });
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -2129,18 +2827,25 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
           <SheetHeader>
             <SheetTitle>Tasks for {selectedEmployee?.name}</SheetTitle>
             <SheetDescription>
-              Viewing all tasks for {selectedEmployee?.currentStage}
+              Viewing all assigned tasks across all onboarding stages
             </SheetDescription>
           </SheetHeader>
 
           <div className="mt-6 space-y-4">
             {selectedEmployee && (() => {
-              // Filter tasks by employee name and their current stage
+              // Filter tasks by employee name (all stages)
               const employeeTasks = filteredTasks.filter(
-                task => task.assignee === selectedEmployee.name && task.stage === selectedEmployee.currentStage
+                task => task.assignee === selectedEmployee.name
               );
 
-              // Calculate progress based on actual tasks in this stage
+              // Group tasks by stage
+              const tasksByStage = {
+                "Pre-Onboarding": employeeTasks.filter(t => t.stage === "Pre-Onboarding"),
+                "1st Day-Onboarding": employeeTasks.filter(t => t.stage === "1st Day-Onboarding"),
+                "Next Day-Onboarding": employeeTasks.filter(t => t.stage === "Next Day-Onboarding")
+              };
+
+              // Calculate overall progress
               const completedTasksCount = employeeTasks.filter(task => task.status === "completed").length;
               const totalTasksCount = employeeTasks.length;
               const actualProgress = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
@@ -2149,7 +2854,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 return (
                   <div className="text-center py-12">
                     <CheckCircle className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-muted-foreground">No tasks found for {selectedEmployee.currentStage}</p>
+                    <p className="text-muted-foreground">No tasks assigned to this employee</p>
                   </div>
                 );
               }
@@ -2196,61 +2901,123 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                     </CardContent>
                   </Card>
 
-                  {/* Tasks List */}
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-sm text-muted-foreground">
-                      Tasks ({employeeTasks.length})
-                    </h3>
-                    {employeeTasks.map((task) => (
-                      <Card key={task.id}>
-                        <CardContent className="pt-4">
-                          <div className="flex items-start gap-3">
-                            {task.status === "completed" ? (
-                              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                            ) : task.status === "overdue" ? (
-                              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                            ) : (
-                              <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-medium">{task.task}</h4>
-                                <StatusChip status={task.status} />
-                              </div>
-                              <div className="mt-2 space-y-1">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <span>Assigned to:</span>
-                                  <span className="font-medium text-foreground">{task.assignedTo}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Calendar className="w-3.5 h-3.5" />
-                                  <span>Due: {task.due}</span>
-                                </div>
-                              </div>
-                              {/* Nudge Button */}
-                              {task.status !== "completed" && (
-                                <div className="mt-3 pt-3 border-t">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full border-blue-300 hover:bg-blue-50"
-                                    onClick={() => {
-                                      toast.success("Reminder Sent!", {
-                                        description: `A notification has been sent to ${task.assignedTo} about the task: "${task.task}"`,
-                                        duration: 5000,
-                                      });
-                                    }}
-                                  >
-                                    <Bell className="w-4 h-4 mr-2" />
-                                    Nudge {task.assignedTo}
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
+                  {/* Tasks List - Grouped by Stage */}
+                  <div className="space-y-6">
+                    {Object.entries(tasksByStage).map(([stage, tasks]) => {
+                      if (tasks.length === 0) return null;
+
+                      const stageColors = {
+                        "Pre-Onboarding": "bg-purple-100 text-purple-800 border-purple-200",
+                        "1st Day-Onboarding": "bg-blue-100 text-blue-800 border-blue-200",
+                        "Next Day-Onboarding": "bg-green-100 text-green-800 border-green-200"
+                      };
+
+                      return (
+                        <div key={stage} className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Badge className={stageColors[stage as keyof typeof stageColors]}>
+                              {stage}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              ({tasks.length} {tasks.length === 1 ? 'task' : 'tasks'})
+                            </span>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+
+                          {tasks.map((task) => (
+                            <Card key={task.id}>
+                              <CardContent className="pt-4">
+                                <div className="flex items-start gap-3">
+                                  {task.status === "completed" ? (
+                                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                  ) : task.status === "overdue" ? (
+                                    <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                  ) : (
+                                    <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <h4 className="font-medium">{task.task}</h4>
+                                      <StatusChip status={task.status} />
+                                    </div>
+                                    <div className="mt-2 space-y-1">
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <Badge variant="outline" className="text-xs">
+                                          {task.type}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span>Assigned to:</span>
+                                        <span className="font-medium text-foreground">{task.assignedTo}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span>Due: {task.due}</span>
+                                      </div>
+                                    </div>
+                                    {/* Task Action Buttons */}
+                                    {task.status !== "completed" ? (
+                                      <div className="flex items-center justify-end gap-1.5 mt-2">
+                                        <button
+                                          type="button"
+                                          className="w-8 h-8 rounded-full border border-blue-300 text-blue-600 hover:bg-blue-50 flex items-center justify-center"
+                                          onClick={() => {
+                                            toast.success("Reminder Sent!", {
+                                              description: `A notification has been sent to ${task.assignedTo} about the task: "${task.task}"`,
+                                              duration: 5000,
+                                            });
+                                          }}
+                                        >
+                                          <Bell className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="w-8 h-8 rounded-full border border-green-600 text-green-600 hover:bg-green-50 flex items-center justify-center"
+                                          onClick={() => {
+                                            toast.success("Task Completed!", {
+                                              description: `Task "${task.task}" has been marked as completed`,
+                                              duration: 3000,
+                                            });
+                                          }}
+                                        >
+                                          <CheckCircle className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="w-8 h-8 rounded-full border border-red-300 text-red-600 hover:bg-red-50 flex items-center justify-center"
+                                          onClick={() => {
+                                            toast.success("Task Deleted!", {
+                                              description: `Task "${task.task}" has been deleted`,
+                                              duration: 3000,
+                                            });
+                                          }}
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center justify-end mt-2">
+                                        <button
+                                          type="button"
+                                          className="w-8 h-8 rounded-full border border-orange-300 text-orange-600 hover:bg-orange-50 flex items-center justify-center"
+                                          onClick={() => {
+                                            toast.success("Task Status Reset!", {
+                                              description: `Task "${task.task}" has been reset to pending status`,
+                                              duration: 3000,
+                                            });
+                                          }}
+                                        >
+                                          <RotateCcw className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </>
               );
