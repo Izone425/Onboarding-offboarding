@@ -11,12 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { 
+import {
   Plus,
   Edit,
-  Copy,
   Trash2,
-  Settings
+  Settings,
+  Eye
 } from "lucide-react";
 
 interface WorkflowData {
@@ -149,6 +149,20 @@ export function WorkflowBuilder({ onNavigate }: WorkflowBuilderProps) {
 
 // Workflow Table Component
 function WorkflowTable({ workflows, onNavigate }: { workflows: WorkflowData[]; onNavigate: (view: string) => void }) {
+  // Handle view workflow (read-only mode)
+  const handleView = (workflow: WorkflowData) => {
+    // Navigate to view mode - in a real application, this would open a read-only view
+    onNavigate(`view-workflow-${workflow.id}`);
+  };
+
+  // Handle delete workflow
+  const handleDelete = (workflow: WorkflowData) => {
+    if (window.confirm(`Are you sure you want to delete "${workflow.name}"?`)) {
+      // In a real application, this would make an API call to delete the workflow
+      alert(`Workflow "${workflow.name}" has been deleted successfully.`);
+    }
+  };
+
   if (workflows.length === 0) {
     return (
       <Card>
@@ -204,17 +218,29 @@ function WorkflowTable({ workflows, onNavigate }: { workflows: WorkflowData[]; o
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleView(workflow)}
+                      title="View"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => onNavigate(`edit-workflow-${workflow.id}`)}
+                      title="Edit"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(workflow)}
+                      title="Delete"
+                      className="hover:text-red-600"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>

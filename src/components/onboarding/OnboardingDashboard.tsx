@@ -32,7 +32,10 @@ import {
   RotateCcw,
   Plus,
   FileCheck,
-  Info
+  Info,
+  Upload,
+  Check,
+  Settings
 } from "lucide-react";
 import {
   Table,
@@ -190,7 +193,8 @@ const allTasksData = [
     status: "pending" as const,
     assignedTo: "HR Coordinator",
     stage: "Pre-Onboarding" as const,
-    company: "timetec-cloud"
+    company: "timetec-cloud",
+    templateId: "welcome-pack"
   },
   {
     id: 2,
@@ -233,7 +237,7 @@ const allTasksData = [
     task: "Employee Information & Document Collection",
     assignee: "Aina Zulkifli",
     due: "2025-09-17",
-    type: "Information/Document",
+    type: "Document",
     indicator: "Onboarding",
     status: "completed" as const,
     assignedTo: "Staff",
@@ -243,6 +247,19 @@ const allTasksData = [
   },
   {
     id: 6,
+    task: "Payroll & Banking Information Setup",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-18",
+    type: "Information",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "Staff",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "payroll-setup-form"
+  },
+  {
+    id: 7,
     task: "Verify Identity Documents",
     assignee: "Harith Rahman",
     due: "2025-09-25",
@@ -254,7 +271,7 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 7,
+    id: 8,
     task: "Process Employment Forms",
     assignee: "Nur Iman",
     due: "2025-10-02",
@@ -266,7 +283,20 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 8,
+    id: 9,
+    task: "Employee Feedback & Satisfaction Survey",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-23",
+    type: "Questionnaire",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "HR",
+    stage: "Next Day-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "employee-feedback-survey"
+  },
+  {
+    id: 10,
     task: "Office Tour & Badge Photo",
     assignee: "Aina Zulkifli",
     due: "2025-09-16",
@@ -277,9 +307,48 @@ const allTasksData = [
     stage: "1st Day-Onboarding" as const,
     company: "timetec-cloud"
   },
+  {
+    id: 11,
+    task: "Day 1 Orientation",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-16",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "HR",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "day-1-orientation"
+  },
+  {
+    id: 12,
+    task: "Grant Email & HRMS Access",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-16",
+    type: "System",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "IT",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "grant-access"
+  },
+  {
+    id: 13,
+    task: "Issue Laptop & ID Card",
+    assignee: "Aina Zulkifli",
+    due: "2025-09-16",
+    type: "Asset",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "IT",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "issue-assets"
+  },
   // TimeTec Computing tasks
   {
-    id: 9,
+    id: 14,
     task: "Welcome Pack",
     assignee: "Siti Aminah",
     due: "2025-09-19",
@@ -291,7 +360,7 @@ const allTasksData = [
     company: "timetec-computing"
   },
   {
-    id: 10,
+    id: 15,
     task: "Setup Company Email",
     assignee: "Siti Aminah",
     due: "2025-09-20",
@@ -303,7 +372,7 @@ const allTasksData = [
     company: "timetec-computing"
   },
   {
-    id: 11,
+    id: 16,
     task: "Hardware Setup",
     assignee: "Amir Hamzah",
     due: "2025-09-26",
@@ -315,7 +384,7 @@ const allTasksData = [
     company: "timetec-computing"
   },
   {
-    id: 12,
+    id: 17,
     task: "Team Introduction Meeting",
     assignee: "Siti Aminah",
     due: "2025-09-19",
@@ -340,7 +409,7 @@ const allTasksData = [
   },
   // FingerTec tasks
   {
-    id: 14,
+    id: 18,
     task: "Onboarding Checklist Review",
     assignee: "Daniel Lee",
     due: "2025-09-21",
@@ -352,7 +421,7 @@ const allTasksData = [
     company: "fingertech"
   },
   {
-    id: 15,
+    id: 19,
     task: "Security Access Setup",
     assignee: "Daniel Lee",
     due: "2025-09-22",
@@ -364,7 +433,7 @@ const allTasksData = [
     company: "fingertech"
   },
   {
-    id: 16,
+    id: 20,
     task: "Department Tour",
     assignee: "Daniel Lee",
     due: "2025-09-21",
@@ -376,7 +445,7 @@ const allTasksData = [
     company: "fingertech"
   },
   {
-    id: 17,
+    id: 21,
     task: "Company Policy Briefing",
     assignee: "Sarah Ibrahim",
     due: "2025-10-06",
@@ -389,7 +458,7 @@ const allTasksData = [
   },
   // Tasks specifically assigned to Sarah Ahmad (HR Admin)
   {
-    id: 18,
+    id: 22,
     task: "Review Aina's Onboarding Progress",
     assignee: "Aina Zulkifli",
     due: "2025-09-17",
@@ -401,7 +470,7 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 19,
+    id: 23,
     task: "Approve Harith's Leave Request",
     assignee: "Harith Rahman",
     due: "2025-09-23",
@@ -413,7 +482,7 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 20,
+    id: 24,
     task: "Schedule Performance Review Meeting",
     assignee: "Nur Iman",
     due: "2025-10-03",
@@ -425,7 +494,7 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 21,
+    id: 25,
     task: "Update Employee Handbook",
     assignee: "All New Hires",
     due: "2025-09-20",
@@ -437,7 +506,7 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 22,
+    id: 26,
     task: "Verify Siti's Training Completion",
     assignee: "Siti Aminah",
     due: "2025-09-23",
@@ -449,7 +518,7 @@ const allTasksData = [
     company: "timetec-computing"
   },
   {
-    id: 23,
+    id: 27,
     task: "Process Amir's Benefits Enrollment",
     assignee: "Amir Hamzah",
     due: "2025-09-27",
@@ -1055,57 +1124,313 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
 
                   <div className="space-y-6 py-6">
                     {/* Task Information */}
-                    <div className="space-y-3">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <Info className="w-4 h-4" />
-                        Task Information
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Type:</span>
-                          <Badge variant="outline">{selectedTaskForDetails.type}</Badge>
+                    <Card className="border-2">
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Assigned To</p>
+                            <p className="font-medium">{selectedTaskForDetails.assignedTo}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Due Date</p>
+                            <p className="font-medium">{selectedTaskForDetails.due}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Status</p>
+                            <StatusChip status={selectedTaskForDetails.status} />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Stage</p>
+                            <Badge variant="outline">{selectedTaskForDetails.stage}</Badge>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Assigned To:</span>
-                          <span className="font-medium">{selectedTaskForDetails.assignedTo}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Assignee:</span>
-                          <span className="font-medium">{selectedTaskForDetails.assignee}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Due Date:</span>
-                          <span className="font-medium">{selectedTaskForDetails.due}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Status:</span>
-                          <StatusChip status={selectedTaskForDetails.status} />
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Stage:</span>
-                          <Badge variant="outline">{selectedTaskForDetails.stage}</Badge>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
 
-                    {/* Task Description */}
+                    {/* Description */}
                     {taskTemplate?.description && (
                       <div className="space-y-3">
-                        <h3 className="font-semibold">Description</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {taskTemplate.description}
-                        </p>
-                        {taskTemplate.url && (
-                          <a
-                            href={taskTemplate.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            Open Task Form
-                          </a>
-                        )}
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Description
+                        </h3>
+                        <Card className="border">
+                          <CardContent className="p-4">
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {taskTemplate.description}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+
+                    {/* Information Requirements - for Information type tasks */}
+                    {taskTemplate?.type === "information" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4" />
+                            Information Requirements
+                          </h3>
+                          <span className="text-sm text-gray-500">11 fields selected</span>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { id: 1, label: "Full Name", value: selectedTaskForDetails.assignee, mandatory: true },
+                            { id: 2, label: "Email Address", value: "aina.zulkifli@timeteccloud.com", mandatory: true },
+                            { id: 3, label: "Phone Number", value: "+60 12-345 6789", mandatory: true },
+                            { id: 4, label: "Home Address", value: "123, Jalan Tun Razak, Kuala Lumpur", mandatory: true },
+                            { id: 5, label: "Emergency Contact", value: "Ahmad Zulkifli", mandatory: true },
+                            { id: 6, label: "Emergency Contact Phone", value: "+60 19-876 5432", mandatory: true },
+                            { id: 7, label: "Bank Account Number", value: "1234567890", mandatory: true },
+                            { id: 8, label: "Bank Name", value: "Maybank", mandatory: true },
+                            { id: 9, label: "EPF Number", value: "12345678", mandatory: true },
+                            { id: 10, label: "SOCSO Number", value: "87654321", mandatory: true },
+                            { id: 11, label: "Tax Number", value: "SG1234567890", mandatory: false }
+                          ].map((field) => (
+                            <div
+                              key={field.id}
+                              className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                                <p className="font-medium text-sm">{field.label}</p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <p className="text-sm text-gray-600">{field.value || "Not provided"}</p>
+                                <span className={`text-xs px-2 py-1 rounded ${field.mandatory ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'}`}>
+                                  {field.mandatory ? "Compulsory" : "Optional"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Questionnaire Questions - for Questionnaire type tasks */}
+                    {taskTemplate?.type === "questionnaire" && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4" />
+                          Questionnaire
+                        </h3>
+                        <div className="space-y-3">
+                          {[
+                            {
+                              id: 1,
+                              question: "How would you rate your overall onboarding experience?",
+                              type: "Picklist (Single)",
+                              required: true,
+                              answer: "Excellent"
+                            },
+                            {
+                              id: 2,
+                              question: "Which aspects of onboarding were most helpful?",
+                              type: "Picklist (Multiple)",
+                              required: true,
+                              answer: "Welcome orientation, Team introduction, Equipment setup"
+                            },
+                            {
+                              id: 3,
+                              question: "What suggestions do you have for improving the onboarding process?",
+                              type: "Text (Multiple Lines)",
+                              required: false,
+                              answer: "The onboarding process was smooth overall. It would be helpful to have a checklist of all required tasks upfront and more time dedicated to understanding the company culture and values."
+                            }
+                          ].map((q, index) => (
+                            <div
+                              key={q.id}
+                              className="border rounded-lg p-4 bg-card hover:bg-accent/50 transition-colors"
+                            >
+                              <div className="flex items-start gap-3 mb-3">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className="text-sm font-semibold text-gray-500 flex-shrink-0">Q{index + 1}</span>
+                                  <p className="font-medium text-sm">{q.question}</p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    title="Expand/Collapse"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mb-3 text-xs">
+                                <span className="text-gray-600">{q.type}</span>
+                                <span className={`px-2 py-0.5 rounded ${q.required ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                                  {q.required ? "Required" : "Optional"}
+                                </span>
+                              </div>
+                              {q.answer && (
+                                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                  <p className="text-xs font-semibold text-green-800 mb-1">Answer:</p>
+                                  <p className="text-sm text-green-900">{q.answer}</p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* System Access Details - for System type tasks */}
+                    {taskTemplate?.type === "system" && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          System Access Details
+                        </h3>
+                        <div className="space-y-3">
+                          {[
+                            {
+                              id: 1,
+                              title: "Corporate Email (Outlook)",
+                              description: "Set up company email account with proper security settings and distribution lists",
+                              assignedTo: "IT Admin",
+                              credentials: {
+                                username: "aina@timeteccloud.com",
+                                password: "Abc12345"
+                              }
+                            },
+                            {
+                              id: 2,
+                              title: "HRMS Portal Access",
+                              description: "Configure access to HR management system for timesheet, leave requests, and personal information updates",
+                              assignedTo: "HR Admin",
+                              credentials: {
+                                username: "aina.zulkifli",
+                                password: "Welcome2025!"
+                              }
+                            }
+                          ].map((system, index) => (
+                            <div
+                              key={system.id}
+                              className="border rounded-lg p-4 bg-card"
+                            >
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-2 flex-1">
+                                  <span className="text-sm font-semibold text-gray-500 flex-shrink-0">#{index + 1}</span>
+                                  <p className="font-medium text-sm">{system.title}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-red-600"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                {system.description}
+                              </p>
+                              <div className="mb-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <User className="w-3 h-3 text-gray-500" />
+                                  <span className="text-xs text-gray-500">Assigned to:</span>
+                                  <span className="text-xs font-medium text-blue-600">{system.assignedTo}</span>
+                                </div>
+                              </div>
+                              <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-2">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-xs font-semibold text-blue-900 w-20">Username:</span>
+                                  <span className="text-xs text-blue-800 font-mono flex-1">{system.credentials.username}</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-xs font-semibold text-blue-900 w-20">Password:</span>
+                                  <span className="text-xs text-blue-800 font-mono flex-1">{system.credentials.password}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Asset Details - for Asset type tasks */}
+                    {taskTemplate?.type === "asset" && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4" />
+                          Asset Details
+                        </h3>
+                        <div className="space-y-3">
+                          {[
+                            {
+                              id: 1,
+                              title: "Laptop Computer",
+                              description: "Business laptop with Windows 11, Microsoft Office suite, and essential software pre-installed",
+                              serialNumber: "Dell-123123",
+                              assignedTo: "IT Admin",
+                              handoverLetter: {
+                                uploaded: true,
+                                signed: true
+                              }
+                            },
+                            {
+                              id: 2,
+                              title: "Employee ID Card",
+                              description: "Photo ID card with building access permissions and employee identification number",
+                              serialNumber: "EMP-2025-001234",
+                              assignedTo: "HR Admin",
+                              handoverLetter: {
+                                uploaded: true,
+                                signed: true
+                              }
+                            }
+                          ].map((asset, index) => (
+                            <div
+                              key={asset.id}
+                              className="border rounded-lg p-4 bg-card"
+                            >
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-sm font-semibold text-gray-500 flex-shrink-0">#{index + 1}</span>
+                                <p className="font-medium text-sm">{asset.title}</p>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                {asset.description}
+                              </p>
+                              <div className="space-y-2 mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Tag className="w-3 h-3 text-gray-500" />
+                                  <span className="text-xs text-gray-500">Serial Number:</span>
+                                  <span className="text-xs font-medium font-mono text-gray-900">{asset.serialNumber}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <User className="w-3 h-3 text-gray-500" />
+                                  <span className="text-xs text-gray-500">Assigned to:</span>
+                                  <span className="text-xs font-medium text-blue-600">{asset.assignedTo}</span>
+                                </div>
+                              </div>
+                              <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <Check className="w-4 h-4 text-green-600" />
+                                    <span className="text-xs font-medium text-green-900">Upload Hand-over Letter</span>
+                                  </div>
+                                  {asset.handoverLetter.uploaded && asset.handoverLetter.signed && (
+                                    <div className="ml-auto flex items-center gap-1">
+                                      <span className="text-xs text-green-700">Uploaded & signed</span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-5 w-5 p-0 text-green-600 hover:text-green-700"
+                                        title="View document"
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-xs text-green-700 mt-1 pl-5">Hand-over letter required</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -1114,54 +1439,127 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                       <div className="space-y-3">
                         <h3 className="font-semibold flex items-center gap-2">
                           <FileText className="w-4 h-4" />
-                          Required Documents ({taskTemplate.requiredDocuments.length})
+                          Required Items
                         </h3>
                         <div className="space-y-2">
-                          {taskTemplate.requiredDocuments.map((doc) => (
-                            <Card key={doc.id} className="border">
-                              <CardContent className="p-3">
-                                <div className="flex items-start gap-3">
-                                  <div className="flex-shrink-0 mt-0.5">
-                                    {doc.mandatory ? (
-                                      <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
-                                        <span className="text-red-600 text-xs font-bold">*</span>
-                                      </div>
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                                        <span className="text-gray-400 text-xs">○</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <h4 className="font-medium text-sm">{doc.name}</h4>
-                                      <Badge variant="outline" className="text-xs flex-shrink-0">
-                                        {doc.category}
-                                      </Badge>
+                          {taskTemplate.requiredDocuments.map((doc) => {
+                            // Simulate upload status - in real app, this would come from backend
+                            const isUploaded = Math.random() > 0.5;
+
+                            return (
+                              <div
+                                key={doc.id}
+                                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                              >
+                                <div className="flex-shrink-0">
+                                  {doc.mandatory ? (
+                                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                                      <span className="text-red-600 text-sm font-bold">*</span>
                                     </div>
-                                    {doc.description && (
-                                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                                        {doc.description}
-                                      </p>
-                                    )}
-                                    {doc.mandatory && (
-                                      <p className="text-xs text-red-600 mt-1 font-medium">
-                                        Required
-                                      </p>
-                                    )}
-                                  </div>
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                                      <span className="text-gray-400 text-sm">○</span>
+                                    </div>
+                                  )}
                                 </div>
-                              </CardContent>
-                            </Card>
-                          ))}
+                                <div className="flex-1">
+                                  <p className="font-medium">{doc.name}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {isUploaded ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      onClick={() => {
+                                        // In real app, this would open/download the uploaded document
+                                        alert(`Viewing uploaded document: ${doc.name}`);
+                                      }}
+                                      title="View uploaded document"
+                                    >
+                                      <Check className="w-4 h-4" />
+                                      <Eye className="w-4 h-4 ml-1" />
+                                    </Button>
+                                  ) : (
+                                    <div className="h-8 px-2 flex items-center">
+                                      <Upload className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                  )}
+                                  {doc.mandatory && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      Compulsory
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                        <div className="bg-muted p-3 rounded-lg">
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-semibold">Note:</span> Documents marked with <span className="text-red-600 font-bold">*</span> are mandatory and must be submitted.
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                          <p className="text-xs text-blue-900">
+                            <span className="font-semibold">Note:</span> Items marked with <span className="text-red-600 font-bold">*</span> are mandatory.
                           </p>
                         </div>
                       </div>
                     )}
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3 pt-4 border-t">
+                      {selectedTaskForDetails.status === "completed" ? (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            // Handle revert mark as completed
+                            alert('Task has been reverted to pending status');
+                            setSelectedTaskForDetails(null);
+                          }}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Revert Mark as Completed
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            className="w-full"
+                            onClick={() => {
+                              // Handle mark as complete
+                              alert('Task marked as complete');
+                              setSelectedTaskForDetails(null);
+                            }}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Mark as Complete
+                          </Button>
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => {
+                                // Handle nudge/reminder
+                                alert('Reminder sent to assignee');
+                              }}
+                            >
+                              <Bell className="w-4 h-4 mr-2" />
+                              Nudge
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete "${selectedTaskForDetails.task}"?`)) {
+                                  alert('Task has been deleted');
+                                  setSelectedTaskForDetails(null);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </>
               );

@@ -35,11 +35,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { 
-  ClipboardList, 
+import {
+  ClipboardList,
   Plus,
   Edit,
-  Copy,
   Archive,
   Filter,
   Search,
@@ -57,7 +56,8 @@ import {
   ChevronUp,
   ChevronDown,
   Trash2,
-  Sparkles
+  Sparkles,
+  Eye
 } from "lucide-react";
 import { taskTemplates, TaskTemplate } from "../../utils/taskTemplatesData";
 
@@ -214,6 +214,7 @@ export function TaskTemplates() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
   const [copyFromTemplate, setCopyFromTemplate] = useState<string>("none");
+  const [isViewMode, setIsViewMode] = useState(false);
   const [formData, setFormData] = useState({
     taskName: "",
     taskType: "",
@@ -1065,6 +1066,21 @@ export function TaskTemplates() {
     }
 
     setIsDrawerOpen(true);
+    setIsViewMode(false);
+  };
+
+  // Handle view template (read-only mode)
+  const handleView = (template: TaskTemplate) => {
+    handleEdit(template); // Reuse the same logic to populate data
+    setIsViewMode(true); // Set to view mode
+  };
+
+  // Handle delete template
+  const handleDelete = (template: TaskTemplate) => {
+    if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      // In a real application, this would make an API call to delete the template
+      alert(`Template "${template.name}" has been deleted successfully.`);
+    }
   };
 
   // Handle copy template from dropdown
@@ -1248,11 +1264,13 @@ export function TaskTemplates() {
           <SheetContent className="w-full max-w-4xl">
             <SheetHeader className="border-b border-gray-200 pb-4">
               <SheetTitle className="flex items-center gap-2">
-                <ClipboardList className="w-5 h-5" />
-                {editingTemplate ? "Edit Task Template" : "Create New Task Template"}
+                {isViewMode ? <Eye className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
+                {isViewMode ? "View Task Template" : editingTemplate ? "Edit Task Template" : "Create New Task Template"}
               </SheetTitle>
               <SheetDescription>
-                {editingTemplate 
+                {isViewMode
+                  ? "View the task template details and requirements in read-only mode."
+                  : editingTemplate
                   ? "Edit the selected task template with its specific settings and requirements."
                   : "Design a new task template with specific requirements, documents, and configuration settings."
                 }
@@ -1308,14 +1326,15 @@ export function TaskTemplates() {
                       value={formData.taskName}
                       onChange={(e) => handleInputChange("taskName", e.target.value)}
                       className="h-11"
+                      disabled={isViewMode}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="taskType">Task Type *</Label>
-                      <Select value={formData.taskType} onValueChange={(value) => handleInputChange("taskType", value)}>
-                        <SelectTrigger className="h-11">
+                      <Select value={formData.taskType} onValueChange={(value) => handleInputChange("taskType", value)} disabled={isViewMode}>
+                        <SelectTrigger className="h-11" disabled={isViewMode}>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -3091,16 +3110,21 @@ export function TaskTemplates() {
 
             {/* Footer Actions */}
             <div className="flex items-center justify-between gap-4 p-4 border-t border-gray-200">
-              <Button variant="outline" onClick={handleReset}>
-                Reset Form
-              </Button>
+              {!isViewMode && (
+                <Button variant="outline" onClick={handleReset}>
+                  Reset Form
+                </Button>
+              )}
+              {isViewMode && <div />}
               <div className="flex items-center gap-3">
                 <Button variant="outline" onClick={() => setIsDrawerOpen(false)}>
-                  Cancel
+                  {isViewMode ? "Close" : "Cancel"}
                 </Button>
-                <Button onClick={handleSubmit}>
-                  {editingTemplate ? "Update Template" : "Create Template"}
-                </Button>
+                {!isViewMode && (
+                  <Button onClick={handleSubmit}>
+                    {editingTemplate ? "Update Template" : "Create Template"}
+                  </Button>
+                )}
               </div>
             </div>
           </SheetContent>
@@ -3208,18 +3232,30 @@ export function TaskTemplates() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleView(template)}
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(template)}
+                        title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Archive className="w-4 h-4" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(template)}
+                        title="Delete"
+                        className="hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>
