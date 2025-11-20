@@ -459,7 +459,7 @@ const allTasksData = [
   // Tasks specifically assigned to Sarah Ahmad (HR Admin)
   {
     id: 22,
-    task: "Review Aina's Onboarding Progress",
+    task: "Review Onboarding Progress",
     assignee: "Aina Zulkifli",
     due: "2025-09-17",
     type: "General Task",
@@ -471,7 +471,7 @@ const allTasksData = [
   },
   {
     id: 23,
-    task: "Approve Harith's Leave Request",
+    task: "Approve Leave Request",
     assignee: "Harith Rahman",
     due: "2025-09-23",
     type: "General Task",
@@ -507,7 +507,7 @@ const allTasksData = [
   },
   {
     id: 26,
-    task: "Verify Siti's Training Completion",
+    task: "Verify Training Completion",
     assignee: "Siti Aminah",
     due: "2025-09-23",
     type: "General Task",
@@ -519,7 +519,7 @@ const allTasksData = [
   },
   {
     id: 27,
-    task: "Process Amir's Benefits Enrollment",
+    task: "Process Benefits Enrollment",
     assignee: "Amir Hamzah",
     due: "2025-09-27",
     type: "Information/Document",
@@ -2739,7 +2739,6 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
               <TabsList>
                 <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
                 <TabsTrigger value="team">Team</TabsTrigger>
-                <TabsTrigger value="all">All</TabsTrigger>
               </TabsList>
             ) : (
               <TabsList>
@@ -2752,7 +2751,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 <TableHeader>
                   <TableRow>
                     <TableHead>Task</TableHead>
-                    <TableHead>Assignee</TableHead>
+                    <TableHead>Employee</TableHead>
                     <TableHead>Due</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Stage</TableHead>
@@ -2827,7 +2826,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                     <TableHeader>
                       <TableRow>
                         <TableHead>Task</TableHead>
-                        <TableHead>Assignee</TableHead>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Assigned to</TableHead>
                         <TableHead>Due</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Stage</TableHead>
@@ -2843,76 +2843,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                           <TableCell className="font-medium">{task.task}</TableCell>
                           <TableCell>{task.assignee}</TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4 text-muted-foreground" />
-                              {task.due}
-                            </div>
+                            <Badge variant="secondary">{task.assignedTo}</Badge>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{task.type}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={
-                                task.stage === "Pre-Onboarding"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : task.stage === "1st Day-Onboarding"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-green-100 text-green-800"
-                              }
-                            >
-                              {task.stage}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <StatusChip status={task.status} />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              {task.status !== "completed" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={() => {
-                                    toast.success("Task Completed!", {
-                                      description: `Task "${task.task}" has been marked as completed`,
-                                      duration: 3000,
-                                    });
-                                  }}
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-
-                <TabsContent value="all">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Task</TableHead>
-                        <TableHead>Assignee</TableHead>
-                        <TableHead>Due</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Stage</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredTasks.map((task) => (
-                        <TableRow key={task.id}>
-                          <TableCell className="font-medium">{task.task}</TableCell>
-                          <TableCell>{task.assignee}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Clock className="w-4 h-4 text-muted-foreground" />
