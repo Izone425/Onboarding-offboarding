@@ -2793,7 +2793,14 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedTaskForDetails(task);
+                              setIsTaskDetailsDrawerOpen(true);
+                            }}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                           {task.status !== "completed" && (
@@ -2872,7 +2879,14 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedTaskForDetails(task);
+                                  setIsTaskDetailsDrawerOpen(true);
+                                }}
+                              >
                                 <Eye className="w-4 h-4" />
                               </Button>
                               {task.status !== "completed" && (
