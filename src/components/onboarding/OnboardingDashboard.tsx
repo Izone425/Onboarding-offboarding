@@ -8,6 +8,7 @@ import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 import {
   TrendingUp,
   FileText,
@@ -177,6 +178,18 @@ const allNewHires = [
     status: "not-started" as const,
     currentStage: "Pre-Onboarding" as const,
     company: "fingertech"
+  },
+  {
+    id: 8,
+    name: "Jessica Wong",
+    manager: "David Kim",
+    startDate: "2025-09-28",
+    completedTasks: 4,
+    totalTasks: 12,
+    progress: 33,
+    status: "in-progress" as const,
+    currentStage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
   }
 ];
 
@@ -343,6 +356,19 @@ const allTasksData = [
     status: "pending" as const,
     assignedTo: "IT",
     stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "issue-assets"
+  },
+  {
+    id: 20,
+    task: "Issue Laptop & ID Card",
+    assignee: "Jessica Wong",
+    due: "2025-09-28",
+    type: "Asset",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "IT/PIC",
+    stage: "Pre-Onboarding" as const,
     company: "timetec-cloud",
     templateId: "issue-assets"
   },
@@ -609,6 +635,14 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<typeof allTasksData[0] | null>(null);
   const [isTaskEmployeesDrawerOpen, setIsTaskEmployeesDrawerOpen] = useState(false);
   const [selectedTaskForEmployees, setSelectedTaskForEmployees] = useState<typeof allTasksData[0] | null>(null);
+
+  // Asset management state for IT/PIC view
+  const [assetSerialNumbers, setAssetSerialNumbers] = useState<{ [key: number]: string }>({
+    1: "", // Laptop
+    2: ""  // ID Card
+  });
+  const [handoverLetterFile, setHandoverLetterFile] = useState<File | null>(null);
+  const [assetRemarks, setAssetRemarks] = useState("");
 
   // Progress by New Hire page filters
   const [progressSearchQuery, setProgressSearchQuery] = useState("");
@@ -1130,12 +1164,22 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                       <CardContent className="p-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
+                            <p className="text-xs text-muted-foreground mb-1">Employee</p>
+                            <p className="font-medium">{selectedTaskForDetails.assignee}</p>
+                          </div>
+                          <div>
                             <p className="text-xs text-muted-foreground mb-1">Assigned To</p>
-                            <p className="font-medium">{selectedTaskForDetails.assignedTo}</p>
+                            <p className="font-medium">
+                              {currentUserRole === selectedTaskForDetails.assignedTo ? "Me" : selectedTaskForDetails.assignedTo}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">Due Date</p>
                             <p className="font-medium">{selectedTaskForDetails.due}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Task Type</p>
+                            <Badge variant="outline">{taskTemplate?.type || selectedTaskForDetails.type}</Badge>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">Status</p>
@@ -1354,87 +1398,172 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                     )}
 
                     {/* Asset Details - for Asset type tasks */}
-                    {taskTemplate?.type === "asset" && (
-                      <div className="space-y-3">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <ClipboardList className="w-4 h-4" />
-                          Asset Details
-                        </h3>
+                    {taskTemplate?.type === "asset" && (() => {
+                      const isTaskOwner = currentUserRole === selectedTaskForDetails?.assignedTo;
+                      const assets = [
+                        {
+                          id: 1,
+                          title: "Laptop Computer",
+                          description: "Business laptop with Windows 11, Microsoft Office suite, and essential software pre-installed",
+                          serialNumber: "Dell-123123",
+                          assignedTo: "IT Admin",
+                          handoverLetter: {
+                            uploaded: true,
+                            signed: true
+                          }
+                        },
+                        {
+                          id: 2,
+                          title: "Employee ID Card",
+                          description: "Photo ID card with building access permissions and employee identification number",
+                          serialNumber: "EMP-2025-001234",
+                          assignedTo: "HR Admin",
+                          handoverLetter: {
+                            uploaded: true,
+                            signed: true
+                          }
+                        }
+                      ];
+
+                      return (
                         <div className="space-y-3">
-                          {[
-                            {
-                              id: 1,
-                              title: "Laptop Computer",
-                              description: "Business laptop with Windows 11, Microsoft Office suite, and essential software pre-installed",
-                              serialNumber: "Dell-123123",
-                              assignedTo: "IT Admin",
-                              handoverLetter: {
-                                uploaded: true,
-                                signed: true
-                              }
-                            },
-                            {
-                              id: 2,
-                              title: "Employee ID Card",
-                              description: "Photo ID card with building access permissions and employee identification number",
-                              serialNumber: "EMP-2025-001234",
-                              assignedTo: "HR Admin",
-                              handoverLetter: {
-                                uploaded: true,
-                                signed: true
-                              }
-                            }
-                          ].map((asset, index) => (
-                            <div
-                              key={asset.id}
-                              className="border rounded-lg p-4 bg-card"
-                            >
-                              <div className="flex items-center gap-2 mb-3">
-                                <span className="text-sm font-semibold text-gray-500 flex-shrink-0">#{index + 1}</span>
-                                <p className="font-medium text-sm">{asset.title}</p>
-                              </div>
-                              <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
-                                {asset.description}
-                              </p>
-                              <div className="space-y-2 mb-3">
-                                <div className="flex items-center gap-2">
-                                  <Tag className="w-3 h-3 text-gray-500" />
-                                  <span className="text-xs text-gray-500">Serial Number:</span>
-                                  <span className="text-xs font-medium font-mono text-gray-900">{asset.serialNumber}</span>
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4" />
+                            Asset Details
+                          </h3>
+                          <div className="space-y-3">
+                            {assets.map((asset, index) => (
+                              <div
+                                key={asset.id}
+                                className="border rounded-lg p-4 bg-card"
+                              >
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="text-sm font-semibold text-gray-500 flex-shrink-0">#{index + 1}</span>
+                                  <p className="font-medium text-sm">{asset.title}</p>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <User className="w-3 h-3 text-gray-500" />
-                                  <span className="text-xs text-gray-500">Assigned to:</span>
-                                  <span className="text-xs font-medium text-blue-600">{asset.assignedTo}</span>
-                                </div>
-                              </div>
-                              <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-1.5">
-                                    <Check className="w-4 h-4 text-green-600" />
-                                    <span className="text-xs font-medium text-green-900">Upload Hand-over Letter</span>
+                                <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                  {asset.description}
+                                </p>
+                                <div className="space-y-3 mb-3">
+                                  {/* Serial Number - Editable for task owner */}
+                                  <div className="space-y-1.5">
+                                    <Label htmlFor={`serial-${asset.id}`} className="text-xs text-gray-500 flex items-center gap-1.5">
+                                      <Tag className="w-3 h-3" />
+                                      Serial Number:
+                                    </Label>
+                                    {isTaskOwner ? (
+                                      <Input
+                                        id={`serial-${asset.id}`}
+                                        placeholder={`Enter serial number for ${asset.title}`}
+                                        value={assetSerialNumbers[asset.id] || ""}
+                                        onChange={(e) => setAssetSerialNumbers(prev => ({
+                                          ...prev,
+                                          [asset.id]: e.target.value
+                                        }))}
+                                        className="font-mono text-sm"
+                                      />
+                                    ) : (
+                                      <span className="text-sm font-medium font-mono text-gray-900 block pl-1">{asset.serialNumber}</span>
+                                    )}
                                   </div>
-                                  {asset.handoverLetter.uploaded && asset.handoverLetter.signed && (
-                                    <div className="ml-auto flex items-center gap-1">
-                                      <span className="text-xs text-green-700">Uploaded & signed</span>
+
+                                  {/* Assigned to */}
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-3 h-3 text-gray-500" />
+                                    <span className="text-xs text-gray-500">Assigned to:</span>
+                                    <span className="text-xs font-medium text-blue-600">{asset.assignedTo}</span>
+                                  </div>
+                                </div>
+                                <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <Check className="w-4 h-4 text-green-600" />
+                                      <span className="text-xs font-medium text-green-900">Upload Hand-over Letter</span>
+                                    </div>
+                                    {asset.handoverLetter.uploaded && asset.handoverLetter.signed && (
+                                      <div className="ml-auto flex items-center gap-1">
+                                        <span className="text-xs text-green-700">Uploaded & signed</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-5 w-5 p-0 text-green-600 hover:text-green-700"
+                                          title="View document"
+                                        >
+                                          <Eye className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-green-700 mt-1 pl-5">Hand-over letter required</p>
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Handover Letter Upload - Only for task owner */}
+                            {isTaskOwner && (
+                              <div className="border rounded-lg p-4 bg-card space-y-3">
+                                <Label htmlFor="handover-letter" className="text-sm font-semibold flex items-center gap-2">
+                                  <Upload className="w-4 h-4" />
+                                  Upload Handover Letter
+                                </Label>
+                                <div className="space-y-2">
+                                  <Input
+                                    id="handover-letter"
+                                    type="file"
+                                    accept=".pdf,.doc,.docx"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        setHandoverLetterFile(file);
+                                        toast.success(`File "${file.name}" selected`);
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  />
+                                  {handoverLetterFile && (
+                                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                                      <FileCheck className="w-4 h-4 text-green-600" />
+                                      <span className="text-xs text-green-900 flex-1">{handoverLetterFile.name}</span>
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-5 w-5 p-0 text-green-600 hover:text-green-700"
-                                        title="View document"
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => setHandoverLetterFile(null)}
                                       >
-                                        <Eye className="w-3 h-3" />
+                                        <X className="w-3 h-3" />
                                       </Button>
                                     </div>
                                   )}
+                                  <p className="text-xs text-muted-foreground">
+                                    Accepted formats: PDF, DOC, DOCX
+                                  </p>
                                 </div>
-                                <p className="text-xs text-green-700 mt-1 pl-5">Hand-over letter required</p>
                               </div>
-                            </div>
-                          ))}
+                            )}
+
+                            {/* Remarks - Only for task owner */}
+                            {isTaskOwner && (
+                              <div className="border rounded-lg p-4 bg-card space-y-3">
+                                <Label htmlFor="asset-remarks" className="text-sm font-semibold">
+                                  Remarks
+                                </Label>
+                                <Textarea
+                                  id="asset-remarks"
+                                  placeholder="Add any remarks or notes about the asset preparation..."
+                                  value={assetRemarks}
+                                  onChange={(e) => setAssetRemarks(e.target.value)}
+                                  rows={4}
+                                  className="resize-none"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Add any additional information or special notes about the asset preparation and handover.
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Required Documents */}
                     {taskTemplate?.requiredDocuments && taskTemplate.requiredDocuments.length > 0 && (
@@ -3512,12 +3641,20 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                     <CardContent className="p-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
+                          <p className="text-xs text-muted-foreground mb-1">Employee</p>
+                          <p className="font-medium">{selectedTaskForDetails.assignee}</p>
+                        </div>
+                        <div>
                           <p className="text-xs text-muted-foreground mb-1">Assigned To</p>
                           <p className="font-medium">{selectedTaskForDetails.assignedTo}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Due Date</p>
                           <p className="font-medium">{selectedTaskForDetails.due}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Task Type</p>
+                          <Badge variant="outline">{taskTemplate?.type || selectedTaskForDetails.type}</Badge>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Status</p>
