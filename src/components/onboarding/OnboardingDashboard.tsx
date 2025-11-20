@@ -607,6 +607,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   const [selectedTrigger, setSelectedTrigger] = useState<string>("");
   const [isTaskDetailsDrawerOpen, setIsTaskDetailsDrawerOpen] = useState(false);
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<typeof allTasksData[0] | null>(null);
+  const [isTaskEmployeesDrawerOpen, setIsTaskEmployeesDrawerOpen] = useState(false);
+  const [selectedTaskForEmployees, setSelectedTaskForEmployees] = useState<typeof allTasksData[0] | null>(null);
 
   // Progress by New Hire page filters
   const [progressSearchQuery, setProgressSearchQuery] = useState("");
@@ -1859,11 +1861,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  const employee = progressFilteredNewHires.find(h => h.name === task.assignee);
-                                  if (employee) {
-                                    setSelectedEmployee(employee);
-                                    setIsEmployeeTasksDrawerOpen(true);
-                                  }
+                                  setSelectedTaskForEmployees(task);
+                                  setIsTaskEmployeesDrawerOpen(true);
                                 }}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
@@ -1914,11 +1913,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  const employee = progressFilteredNewHires.find(h => h.name === task.assignee);
-                                  if (employee) {
-                                    setSelectedEmployee(employee);
-                                    setIsEmployeeTasksDrawerOpen(true);
-                                  }
+                                  setSelectedTaskForEmployees(task);
+                                  setIsTaskEmployeesDrawerOpen(true);
                                 }}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
@@ -1969,11 +1965,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  const employee = progressFilteredNewHires.find(h => h.name === task.assignee);
-                                  if (employee) {
-                                    setSelectedEmployee(employee);
-                                    setIsEmployeeTasksDrawerOpen(true);
-                                  }
+                                  setSelectedTaskForEmployees(task);
+                                  setIsTaskEmployeesDrawerOpen(true);
                                 }}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
@@ -2193,6 +2186,129 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   </>
                 );
               })()}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Task Employees Drawer - Shows employees assigned to a specific task */}
+        <Sheet open={isTaskEmployeesDrawerOpen} onOpenChange={setIsTaskEmployeesDrawerOpen}>
+          <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <ClipboardList className="w-5 h-5" />
+                {selectedTaskForEmployees?.task}
+              </SheetTitle>
+              <SheetDescription>
+                Employees assigned to this task
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="mt-6 space-y-4">
+              {/* Task Information */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium">Task Type:</span>
+                    <Badge variant="outline">{selectedTaskForEmployees?.type}</Badge>
+                  </div>
+                  <StatusChip status={selectedTaskForEmployees?.status || "pending"} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium">Company:</span>
+                  <Badge variant="outline">
+                    {companies.find(c => c.id === selectedTaskForEmployees?.company)?.name}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium">Stage:</span>
+                  <Badge variant="outline">{selectedTaskForEmployees?.stage}</Badge>
+                </div>
+              </div>
+
+              {/* Assigned Employees List */}
+              <div>
+                <h3 className="text-sm font-semibold mb-3">Assigned Employees</h3>
+                <div className="space-y-3">
+                  {(() => {
+                    // Find all employees assigned to this task
+                    const assignedEmployees = allTasksData
+                      .filter(t => t.task === selectedTaskForEmployees?.task && t.company === selectedTaskForEmployees?.company)
+                      .map(t => {
+                        const employee = allNewHires.find(h => h.name === t.assignee);
+                        return employee ? { ...employee, taskStatus: t.status, taskDue: t.due } : null;
+                      })
+                      .filter(e => e !== null);
+
+                    if (assignedEmployees.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-500">
+                          No employees assigned to this task
+                        </div>
+                      );
+                    }
+
+                    return assignedEmployees.map((employee, index) => (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <User className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{employee.name}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-gray-500">Manager: {employee.manager}</span>
+                                  <span className="text-xs text-gray-400">•</span>
+                                  <span className="text-xs text-gray-500">Start: {employee.startDate}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <StatusChip status={employee.taskStatus} />
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Calendar className="w-3 h-3" />
+                                Due: {employee.taskDue}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="mt-3">
+                            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                              <span>Overall Progress</span>
+                              <span>{employee.completedTasks}/{employee.totalTasks} tasks</span>
+                            </div>
+                            <Progress
+                              value={(employee.completedTasks / employee.totalTasks) * 100}
+                              className="h-2"
+                            />
+                          </div>
+
+                          {/* View Employee Details Button */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-3"
+                            onClick={() => {
+                              setSelectedEmployee(employee);
+                              setIsTaskEmployeesDrawerOpen(false);
+                              setShowProgressByNewHire(false);
+                              setShowEmployeeTasksPage(true);
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Employee Details
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ));
+                  })()}
+                </div>
+              </div>
             </div>
           </SheetContent>
         </Sheet>

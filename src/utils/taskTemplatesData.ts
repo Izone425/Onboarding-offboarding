@@ -222,6 +222,20 @@ export const taskTemplates: TaskTemplate[] = [
     description: "Comprehensive feedback survey to gather new employee insights about their onboarding experience, workplace satisfaction, and suggestions for improvement. This survey helps HR teams enhance the onboarding process and identify areas for organizational development.",
     url: "https://surveys.company.com/employee-feedback",
     isActive: true
+  },
+  {
+    id: "first-week-checklist",
+    name: "First Week Onboarding Checklist",
+    type: "checklist",
+    indicator: "onboarding",
+    ownerRole: "HR",
+    sla: 5,
+    mandatory: true,
+    dependencies: ["day-1-orientation"],
+    lastUpdated: "2025-08-30",
+    description: "Comprehensive checklist to ensure all essential onboarding activities are completed during the new employee's first week. Includes workstation setup verification, team introductions, initial training sessions, policy acknowledgments, and first-week feedback collection. This checklist ensures a smooth onboarding experience and helps track progress.",
+    url: "https://onboarding.company.com/first-week-checklist",
+    isActive: true
   }
 ];
 
