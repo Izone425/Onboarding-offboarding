@@ -727,6 +727,9 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   // Task list stage filter for Staff view
   const [taskStageFilter, setTaskStageFilter] = useState<string[]>(["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"]);
 
+  // Document uploads for required items
+  const [uploadedDocuments, setUploadedDocuments] = useState<{ [key: string]: File }>({});
+
   const toggleCompany = (companyId: string) => {
     setSelectedCompanies(prev =>
       prev.includes(companyId)
@@ -3105,82 +3108,127 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
         </CardHeader>
         <CardContent>
           {currentUserRole === "Staff" ? (
-            <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Due</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Stage</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTasks
-                    .filter(task => task.assignedTo === currentUserRole)
-                    .filter(task => currentUserRole !== "Staff" || taskStageFilter.includes(task.stage))
-                    .map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell className="font-medium">{task.task}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          {task.due}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{task.type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            task.stage === "Pre-Onboarding"
-                              ? "bg-purple-100 text-purple-800"
-                              : task.stage === "1st Day-Onboarding"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
-                          }
-                        >
-                          {task.stage}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <StatusChip status={task.status} />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedTaskForDetails(task);
-                              setIsTaskDetailsDrawerOpen(true);
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          {task.status !== "completed" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                              onClick={() => {
-                                toast.success("Task Completed!", {
-                                  description: `Task "${task.task}" has been marked as completed`,
-                                  duration: 3000,
-                                });
-                              }}
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="grid grid-cols-3 gap-6 min-h-[500px] items-start w-full" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"].map((stage) => {
+                  const isStageFiltered = taskStageFilter.includes(stage);
+                  const stageTasks = isStageFiltered
+                    ? filteredTasks.filter(task => task.assignedTo === currentUserRole && task.stage === stage)
+                    : [];
+
+                  return (
+                    <div key={stage} className="space-y-4 border rounded-lg p-4 bg-white" style={{ opacity: isStageFiltered ? 1 : 0.3 }}>
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <h3 className="font-semibold text-sm flex items-center gap-2">
+                          {stage === "Pre-Onboarding" && <ClipboardList className="w-4 h-4 text-purple-600" />}
+                          {stage === "1st Day-Onboarding" && <Calendar className="w-4 h-4 text-blue-600" />}
+                          {stage === "Next Day-Onboarding" && <CheckCircle className="w-4 h-4 text-green-600" />}
+                          {stage}
+                        </h3>
+                        <Badge variant="secondary">{stageTasks.length}</Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        {stageTasks.map((task) => (
+                          <Card key={task.id} className="hover:shadow-sm transition-shadow border-l-4" style={{
+                            borderLeftColor: task.status === "completed" ? "#10b981" : "#f59e0b"
+                          }}>
+                            <CardContent className="p-2.5">
+                              <div className="space-y-1.5">
+                                {/* Task Title */}
+                                <div className="flex items-start gap-2">
+                                  {task.status === "completed" ? (
+                                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  ) : (
+                                    <Clock className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                  )}
+                                  <h4 className="font-medium text-sm leading-tight flex-1">{task.task}</h4>
+                                </div>
+
+                                {/* Task Details */}
+                                <div className="pl-6 space-y-0.5 text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1.5">
+                                    <Badge
+                                      variant={task.status === "completed" ? "default" : "secondary"}
+                                      className={`text-xs ${task.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                                    >
+                                      {task.type}
+                                    </Badge>
+                                    <StatusChip status={task.status} />
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{task.due}</span>
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center justify-end gap-1 pt-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    onClick={() => {
+                                      setSelectedTaskForDetails(task);
+                                      setIsTaskDetailsDrawerOpen(true);
+                                    }}
+                                    title="View Details"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                  {task.status !== "completed" ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      onClick={() => {
+                                        if (task.type === "Document") {
+                                          toast.success("Documents Uploaded!", {
+                                            description: `Documents for "${task.task}" have been marked as uploaded`,
+                                            duration: 3000,
+                                          });
+                                        } else {
+                                          toast.success("Task Completed!", {
+                                            description: `Task "${task.task}" has been marked as completed`,
+                                            duration: 3000,
+                                          });
+                                        }
+                                      }}
+                                      title={task.type === "Document" ? "Mark as Uploaded" : "Mark as Completed"}
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                      onClick={() => {
+                                        toast.info("Task Reverted", {
+                                          description: `"${task.task}" has been reverted to pending`,
+                                          duration: 2000,
+                                        });
+                                      }}
+                                      title="Revert"
+                                    >
+                                      <RotateCcw className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+
+                        {stageTasks.length === 0 && (
+                          <div className="text-center py-8 text-muted-foreground text-sm">
+                            No tasks in this stage
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           ) : (
             <Tabs defaultValue="assigned" className="space-y-4">
               <TabsList>
@@ -4532,8 +4580,9 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                       </h3>
                       <div className="space-y-2">
                         {taskTemplate.requiredDocuments.map((doc) => {
-                          // Simulate upload status - in real app, this would come from backend
-                          const isUploaded = Math.random() > 0.5;
+                          const docKey = `${selectedTaskForDetails.id}-${doc.id}`;
+                          const uploadedFile = uploadedDocuments[docKey];
+                          const isUploaded = !!uploadedFile;
 
                           return (
                             <div
@@ -4553,26 +4602,104 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                               </div>
                               <div className="flex-1">
                                 <p className="font-medium">{doc.name}</p>
+                                {isUploaded && (
+                                  <p className="text-xs text-muted-foreground mt-1">{uploadedFile.name}</p>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
-                                {isUploaded ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                    onClick={() => {
-                                      // In real app, this would open/download the uploaded document
-                                      alert(`Viewing uploaded document: ${doc.name}`);
-                                    }}
-                                    title="View uploaded document"
-                                  >
-                                    <Check className="w-4 h-4" />
-                                    <Eye className="w-4 h-4 ml-1" />
-                                  </Button>
+                                {currentUserRole === "Staff" ? (
+                                  <>
+                                    {isUploaded ? (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                          onClick={() => {
+                                            toast.success("Document Uploaded", {
+                                              description: `${uploadedFile.name} has been uploaded successfully`,
+                                              duration: 3000,
+                                            });
+                                          }}
+                                          title="Document uploaded"
+                                        >
+                                          <Check className="w-4 h-4" />
+                                          <Eye className="w-4 h-4 ml-1" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 px-2"
+                                          onClick={() => {
+                                            const newDocs = { ...uploadedDocuments };
+                                            delete newDocs[docKey];
+                                            setUploadedDocuments(newDocs);
+                                            toast.info("Document Removed", {
+                                              description: `${doc.name} has been removed`,
+                                              duration: 2000,
+                                            });
+                                          }}
+                                          title="Remove document"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <label className="cursor-pointer">
+                                        <input
+                                          type="file"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                              setUploadedDocuments(prev => ({
+                                                ...prev,
+                                                [docKey]: file
+                                              }));
+                                              toast.success("Document Added", {
+                                                description: `${file.name} has been selected for upload`,
+                                                duration: 2000,
+                                              });
+                                            }
+                                          }}
+                                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        />
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 px-3"
+                                          asChild
+                                        >
+                                          <span>
+                                            <Upload className="w-4 h-4 mr-1" />
+                                            Upload
+                                          </span>
+                                        </Button>
+                                      </label>
+                                    )}
+                                  </>
                                 ) : (
-                                  <div className="h-8 px-2 flex items-center">
-                                    <Upload className="w-4 h-4 text-gray-400" />
-                                  </div>
+                                  <>
+                                    {isUploaded ? (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                        onClick={() => {
+                                          alert(`Viewing uploaded document: ${doc.name}`);
+                                        }}
+                                        title="View uploaded document"
+                                      >
+                                        <Check className="w-4 h-4" />
+                                        <Eye className="w-4 h-4 ml-1" />
+                                      </Button>
+                                    ) : (
+                                      <div className="h-8 px-2 flex items-center">
+                                        <Upload className="w-4 h-4 text-gray-400" />
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                                 {doc.mandatory && (
                                   <Badge variant="destructive" className="text-xs">
@@ -4747,44 +4874,63 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                             </>
                           ) : (
                             <>
-                              {/* Standard Mark as Complete for non-asset tasks */}
-                              <Button
-                                className="w-full"
-                                onClick={() => {
-                                  // Handle mark as complete
-                                  alert('Task marked as complete');
-                                  setSelectedTaskForDetails(null);
-                                }}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Mark as Complete
-                              </Button>
-                              <div className="flex items-center gap-3">
+                              {/* For Document tasks assigned to Staff - Show Mark as Uploaded */}
+                              {selectedTaskForDetails.type === "Document" && currentUserRole === "Staff" ? (
                                 <Button
-                                  variant="outline"
-                                  className="flex-1"
+                                  className="w-full bg-blue-600 hover:bg-blue-700"
                                   onClick={() => {
-                                    // Handle nudge/reminder
-                                    alert('Reminder sent to assignee');
+                                    toast.success("Documents Uploaded!", {
+                                      description: `Documents for "${selectedTaskForDetails.task}" have been marked as uploaded`,
+                                      duration: 3000,
+                                    });
+                                    setIsTaskDetailsDrawerOpen(false);
                                   }}
                                 >
-                                  <Bell className="w-4 h-4 mr-2" />
-                                  Nudge
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  Mark as Uploaded
                                 </Button>
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
-                                  onClick={() => {
-                                    if (window.confirm(`Are you sure you want to delete "${selectedTaskForDetails.task}"?`)) {
-                                      alert('Task has been deleted');
+                              ) : (
+                                <>
+                                  {/* Standard Mark as Complete for non-asset tasks */}
+                                  <Button
+                                    className="w-full"
+                                    onClick={() => {
+                                      // Handle mark as complete
+                                      alert('Task marked as complete');
                                       setSelectedTaskForDetails(null);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </Button>
-                              </div>
+                                    }}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Mark as Complete
+                                  </Button>
+                                  <div className="flex items-center gap-3">
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1"
+                                      onClick={() => {
+                                        // Handle nudge/reminder
+                                        alert('Reminder sent to assignee');
+                                      }}
+                                    >
+                                      <Bell className="w-4 h-4 mr-2" />
+                                      Nudge
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
+                                      onClick={() => {
+                                        if (window.confirm(`Are you sure you want to delete "${selectedTaskForDetails.task}"?`)) {
+                                          alert('Task has been deleted');
+                                          setSelectedTaskForDetails(null);
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             </>
                           )}
                         </>
