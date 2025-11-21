@@ -724,6 +724,9 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   const [progressStageFilter, setProgressStageFilter] = useState("all");
   const [progressStatusFilter, setProgressStatusFilter] = useState("all");
 
+  // Task list stage filter for Staff view
+  const [taskStageFilter, setTaskStageFilter] = useState<string[]>(["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"]);
+
   const toggleCompany = (companyId: string) => {
     setSelectedCompanies(prev =>
       prev.includes(companyId)
@@ -2556,41 +2559,43 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
           <h1 className="text-2xl font-semibold text-foreground">Onboarding Dashboard</h1>
           <p className="text-muted-foreground">Track new hire progress and manage onboarding tasks</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">
-                <Building2 className="w-4 h-4 mr-2" />
-                Companies ({selectedCompanies.length})
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64" align="end">
-              <div className="space-y-3">
-                <div className="font-medium text-sm">Select Companies</div>
-                {companies.map((company) => (
-                  <div key={company.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={company.id}
-                      checked={selectedCompanies.includes(company.id)}
-                      onCheckedChange={() => toggleCompany(company.id)}
-                    />
-                    <label
-                      htmlFor={company.id}
-                      className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {company.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-          <Button onClick={handleOpenAssignDrawer}>
-            <Users className="w-4 h-4 mr-2" />
-            Assign Onboarding Template
-          </Button>
-        </div>
+        {currentUserRole !== "Staff" && (
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Companies ({selectedCompanies.length})
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="end">
+                <div className="space-y-3">
+                  <div className="font-medium text-sm">Select Companies</div>
+                  {companies.map((company) => (
+                    <div key={company.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={company.id}
+                        checked={selectedCompanies.includes(company.id)}
+                        onCheckedChange={() => toggleCompany(company.id)}
+                      />
+                      <label
+                        htmlFor={company.id}
+                        className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {company.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Button onClick={handleOpenAssignDrawer}>
+              <Users className="w-4 h-4 mr-2" />
+              Assign Onboarding Template
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -2602,48 +2607,140 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
             const pendingTasks = staffTasks.filter(task => task.status === "pending");
             const notStartedTasks = staffTasks.filter(task => task.status === "not-started");
             const totalTasks = staffTasks.length;
-            const completionPercentage = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
+
+            // Calculate tasks per stage for staff
+            const preOnboardingTasks = staffTasks.filter(task => task.stage === "Pre-Onboarding");
+            const firstDayTasks = staffTasks.filter(task => task.stage === "1st Day-Onboarding");
+            const nextDayTasks = staffTasks.filter(task => task.stage === "Next Day-Onboarding");
+
+            const preOnboardingCompleted = preOnboardingTasks.filter(task => task.status === "completed").length;
+            const firstDayCompleted = firstDayTasks.filter(task => task.status === "completed").length;
+            const nextDayCompleted = nextDayTasks.filter(task => task.status === "completed").length;
+
+            const preOnboardingPercentage = preOnboardingTasks.length > 0 ? Math.round((preOnboardingCompleted / preOnboardingTasks.length) * 100) : 0;
+            const firstDayPercentage = firstDayTasks.length > 0 ? Math.round((firstDayCompleted / firstDayTasks.length) * 100) : 0;
+            const nextDayPercentage = nextDayTasks.length > 0 ? Math.round((nextDayCompleted / nextDayTasks.length) * 100) : 0;
 
             return (
               <>
-                <StatCard
-                  title="Onboarding Progress"
-                  value={`${completionPercentage}%`}
-                  icon={TrendingUp}
-                  variant="primary"
-                  subtitle={`${completedTasks.length}/${totalTasks} tasks completed`}
-                  progress={{
-                    value: completionPercentage,
-                    message: completionPercentage >= 75
-                      ? "You're doing great! Keep up the excellent progress."
-                      : completionPercentage >= 50
-                      ? "Great progress! You're more than halfway there."
-                      : completionPercentage >= 25
-                      ? "Good start! Keep going to complete your onboarding."
-                      : "Welcome! Let's get started with your onboarding tasks."
-                  }}
-                />
-                <StatCard
-                  title="Completed Tasks"
-                  value={`${completedTasks.length}`}
-                  icon={CheckCircle}
-                  variant="success"
-                  subtitle={`${totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0}% of total tasks`}
-                />
-                <StatCard
-                  title="Pending Tasks"
-                  value={`${pendingTasks.length}`}
-                  icon={Clock}
-                  variant="warning"
-                  subtitle={`${totalTasks > 0 ? Math.round((pendingTasks.length / totalTasks) * 100) : 0}% of total tasks`}
-                />
-                <StatCard
-                  title="Not Started"
-                  value={`${notStartedTasks.length}`}
-                  icon={AlertTriangle}
-                  variant="danger"
-                  subtitle={`${totalTasks > 0 ? Math.round((notStartedTasks.length / totalTasks) * 100) : 0}% of total tasks`}
-                />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5" />
+                      Onboarding Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Pre-Onboarding Progress */}
+                    <div className="space-y-2 p-3 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4 text-purple-600" />
+                          <span className="text-sm font-medium">Pre-Onboarding</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {preOnboardingCompleted} of {preOnboardingTasks.length} tasks
+                          </span>
+                          <span className="text-sm font-semibold">{preOnboardingPercentage}%</span>
+                        </div>
+                      </div>
+                      <Progress value={preOnboardingPercentage} className="h-2" />
+                    </div>
+
+                    {/* 1st Day-Onboarding Progress */}
+                    <div className="space-y-2 p-3 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm font-medium">1st Day-Onboarding</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {firstDayCompleted} of {firstDayTasks.length} tasks
+                          </span>
+                          <span className="text-sm font-semibold">{firstDayPercentage}%</span>
+                        </div>
+                      </div>
+                      <Progress value={firstDayPercentage} className="h-2" />
+                    </div>
+
+                    {/* Next Day-Onboarding Progress */}
+                    <div className="space-y-2 p-3 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium">Next Day-Onboarding</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {nextDayCompleted} of {nextDayTasks.length} tasks
+                          </span>
+                          <span className="text-sm font-semibold">{nextDayPercentage}%</span>
+                        </div>
+                      </div>
+                      <Progress value={nextDayPercentage} className="h-2" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-500 text-white">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Completed Tasks</span>
+                      <CheckCircle className="w-5 h-5" />
+                    </CardTitle>
+                    <div className="text-3xl font-bold">{completedTasks.length}</div>
+                    <p className="text-sm opacity-90">{totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0}% of total tasks</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {completedTasks.length > 0 ? (
+                        completedTasks.map((task, index) => (
+                          <div key={index} className="bg-white/20 backdrop-blur-sm rounded-lg p-3 flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{task.task}</div>
+                              <div className="text-xs opacity-75 mt-1">
+                                Assignee: {task.assignee} • Due: {task.due}
+                              </div>
+                            </div>
+                            <CheckCircle className="w-5 h-5 ml-3 flex-shrink-0" />
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm opacity-75">No completed tasks yet</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-red-500 text-white">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Not Started</span>
+                      <AlertTriangle className="w-5 h-5" />
+                    </CardTitle>
+                    <div className="text-3xl font-bold">{notStartedTasks.length}</div>
+                    <p className="text-sm opacity-90">{totalTasks > 0 ? Math.round((notStartedTasks.length / totalTasks) * 100) : 0}% of total tasks</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {notStartedTasks.length > 0 ? (
+                        notStartedTasks.map((task, index) => (
+                          <div key={index} className="bg-white/20 backdrop-blur-sm rounded-lg p-3 flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{task.task}</div>
+                              <div className="text-xs opacity-75 mt-1">
+                                Assignee: {task.assignee} • Due: {task.due}
+                              </div>
+                            </div>
+                            <AlertTriangle className="w-5 h-5 ml-3 flex-shrink-0" />
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm opacity-75">No tasks in this status</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             );
           })()
@@ -2959,33 +3056,59 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
+              {currentUserRole === "Staff" ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Filter className="w-4 h-4 mr-2" />
+                      Stage Filter
+                      {taskStageFilter.length < 3 && (
+                        <Badge variant="secondary" className="ml-2">{taskStageFilter.length}</Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64" align="end">
+                    <div className="space-y-3">
+                      <div className="font-medium text-sm">Filter by Stage</div>
+                      {["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"].map((stage) => (
+                        <div key={stage} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={stage}
+                            checked={taskStageFilter.includes(stage)}
+                            onCheckedChange={() => {
+                              setTaskStageFilter(prev =>
+                                prev.includes(stage)
+                                  ? prev.filter(s => s !== stage)
+                                  : [...prev, stage]
+                              );
+                            }}
+                          />
+                          <label
+                            htmlFor={stage}
+                            className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {stage}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Button variant="outline" size="sm">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="assigned" className="space-y-4">
-            {currentUserRole !== "Staff" ? (
-              <TabsList>
-                <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
-                <TabsTrigger value="team">Team</TabsTrigger>
-                <TabsTrigger value="unassigned">Unassigned</TabsTrigger>
-              </TabsList>
-            ) : (
-              <TabsList>
-                <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
-              </TabsList>
-            )}
-            
-            <TabsContent value="assigned">
-              <Table>
+          {currentUserRole === "Staff" ? (
+            <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Task</TableHead>
-                    <TableHead>Employee</TableHead>
                     <TableHead>Due</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Stage</TableHead>
@@ -2996,10 +3119,10 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 <TableBody>
                   {filteredTasks
                     .filter(task => task.assignedTo === currentUserRole)
+                    .filter(task => currentUserRole !== "Staff" || taskStageFilter.includes(task.stage))
                     .map((task) => (
                     <TableRow key={task.id}>
                       <TableCell className="font-medium">{task.task}</TableCell>
-                      <TableCell>{currentUserRole === "Staff" ? "New Hire" : task.assignee}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4 text-muted-foreground" />
@@ -3058,7 +3181,93 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   ))}
                 </TableBody>
               </Table>
-            </TabsContent>
+          ) : (
+            <Tabs defaultValue="assigned" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="unassigned">Unassigned</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="assigned">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Task</TableHead>
+                      <TableHead>Employee</TableHead>
+                      <TableHead>Due</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTasks
+                      .filter(task => task.assignedTo === currentUserRole)
+                      .map((task) => (
+                      <TableRow key={task.id}>
+                        <TableCell className="font-medium">{task.task}</TableCell>
+                        <TableCell>{task.assignee}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            {task.due}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{task.type}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              task.stage === "Pre-Onboarding"
+                                ? "bg-purple-100 text-purple-800"
+                                : task.stage === "1st Day-Onboarding"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }
+                          >
+                            {task.stage}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={task.status} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedTaskForDetails(task);
+                                setIsTaskDetailsDrawerOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            {task.status !== "completed" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={() => {
+                                  toast.success("Task Completed!", {
+                                    description: `Task "${task.task}" has been marked as completed`,
+                                    duration: 3000,
+                                  });
+                                }}
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TabsContent>
 
             {currentUserRole !== "Staff" && (
               <>
@@ -3262,7 +3471,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 </TabsContent>
               </>
             )}
-          </Tabs>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
 
