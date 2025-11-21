@@ -53,6 +53,14 @@ import {
   PopoverTrigger,
 } from "../ui/popover";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "../ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -519,8 +527,69 @@ const allTasksData = [
     stage: "Next Day-Onboarding" as const,
     company: "timetec-cloud"
   },
+  // Unassigned tasks
   {
     id: 25,
+    task: "Configure VPN Access",
+    assignee: "Jessica Wong",
+    due: "2025-09-28",
+    type: "System/Access",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Unassigned",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 26,
+    task: "Setup Development Environment",
+    assignee: "Jessica Wong",
+    due: "2025-09-29",
+    type: "System/Access",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Unassigned",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 27,
+    task: "Team Introduction Meeting",
+    assignee: "Jessica Wong",
+    due: "2025-10-01",
+    type: "Meeting/Event",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Unassigned",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud"
+  },
+  {
+    id: 28,
+    task: "Assign Workspace",
+    assignee: "Amir Hamzah",
+    due: "2025-09-27",
+    type: "Asset",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Unassigned",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 29,
+    task: "Parking Pass Issuance",
+    assignee: "Amir Hamzah",
+    due: "2025-09-27",
+    type: "General Task",
+    indicator: "Onboarding",
+    status: "not-started" as const,
+    assignedTo: "Unassigned",
+    stage: "Pre-Onboarding" as const,
+    company: "timetec-computing"
+  },
+  {
+    id: 30,
     task: "Update Employee Handbook",
     assignee: "All New Hires",
     due: "2025-09-20",
@@ -532,7 +601,7 @@ const allTasksData = [
     company: "timetec-cloud"
   },
   {
-    id: 26,
+    id: 31,
     task: "Verify Training Completion",
     assignee: "Siti Aminah",
     due: "2025-09-23",
@@ -544,7 +613,7 @@ const allTasksData = [
     company: "timetec-computing"
   },
   {
-    id: 27,
+    id: 32,
     task: "Process Benefits Enrollment",
     assignee: "Amir Hamzah",
     due: "2025-09-27",
@@ -636,13 +705,19 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   const [isTaskEmployeesDrawerOpen, setIsTaskEmployeesDrawerOpen] = useState(false);
   const [selectedTaskForEmployees, setSelectedTaskForEmployees] = useState<typeof allTasksData[0] | null>(null);
 
+
+  // Tasks state - convert static data to state for dynamic updates
+  const [tasks, setTasks] = useState(allTasksData);
+
   // Asset management state for IT/PIC view
   const [assetSerialNumbers, setAssetSerialNumbers] = useState<{ [key: number]: string }>({
     1: "", // Laptop
     2: ""  // ID Card
   });
   const [handoverLetterFile, setHandoverLetterFile] = useState<File | null>(null);
-  const [assetRemarks, setAssetRemarks] = useState("");
+  const [handoverLetterFiles, setHandoverLetterFiles] = useState<{ [key: number]: File | null }>({});
+  const [assetRemarks, setAssetRemarks] = useState<{ [key: number]: string }>({});
+  const [savedAssets, setSavedAssets] = useState<{ [key: number]: boolean }>({});
 
   // Progress by New Hire page filters
   const [progressSearchQuery, setProgressSearchQuery] = useState("");
@@ -674,6 +749,35 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
     };
 
     return teamMapping[userRole] || [userRole];
+  };
+
+  // Task assignment handlers
+  const handleAssignToSelf = (task: typeof allTasksData[0]) => {
+    setTasks((prevTasks: typeof allTasksData) =>
+      prevTasks.map((t: typeof allTasksData[0]) =>
+        t.id === task.id
+          ? { ...t, assignedTo: currentUserRole }
+          : t
+      )
+    );
+    toast.success("Task Assigned!", {
+      description: `Task "${task.task}" has been assigned to you (${currentUserRole})`,
+      duration: 3000,
+    });
+  };
+
+  const handleAssignToOther = (task: typeof allTasksData[0], assignedRole: string) => {
+    setTasks((prevTasks: typeof allTasksData) =>
+      prevTasks.map((t: typeof allTasksData[0]) =>
+        t.id === task.id
+          ? { ...t, assignedTo: assignedRole }
+          : t
+      )
+    );
+    toast.success("Task Assigned!", {
+      description: `Task "${task.task}" has been assigned to ${assignedRole}`,
+      duration: 3000,
+    });
   };
 
   // Get onboarding workflows
@@ -761,8 +865,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
   }, [filteredNewHires, progressSearchQuery, progressStageFilter, progressStatusFilter]);
 
   const filteredTasks = useMemo(() => {
-    return allTasksData.filter(task => selectedCompanies.includes(task.company));
-  }, [selectedCompanies]);
+    return tasks.filter((task: typeof allTasksData[0]) => selectedCompanies.includes(task.company));
+  }, [selectedCompanies, tasks]);
 
   const filteredAlerts = useMemo(() => {
     return allAlertsData.filter(alert => selectedCompanies.includes(alert.company));
@@ -920,8 +1024,8 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
         {/* Tasks grouped by stage */}
         <div className="grid gap-3 w-full" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
           {["Pre-Onboarding", "1st Day-Onboarding", "Next Day-Onboarding"].map(stage => {
-            const stageTasks = allTasksData.filter(
-              task => task.assignee === selectedEmployee.name && task.stage === stage
+            const stageTasks = tasks.filter(
+              (task: typeof allTasksData[0]) => task.assignee === selectedEmployee.name && task.stage === stage
             );
 
             return (
@@ -941,7 +1045,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                     {stageTasks.length === 0 ? (
                       <p className="text-xs text-muted-foreground text-center py-3">No tasks</p>
                     ) : (
-                      stageTasks.map(task => (
+                      stageTasks.map((task: typeof allTasksData[0]) => (
                       <Card
                         key={task.id}
                         className="border cursor-pointer hover:bg-accent/50 transition-colors"
@@ -2363,13 +2467,13 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                 <div className="space-y-3">
                   {(() => {
                     // Find all employees assigned to this task
-                    const assignedEmployees = allTasksData
-                      .filter(t => t.task === selectedTaskForEmployees?.task && t.company === selectedTaskForEmployees?.company)
-                      .map(t => {
+                    const assignedEmployees = tasks
+                      .filter((t: typeof allTasksData[0]) => t.task === selectedTaskForEmployees?.task && t.company === selectedTaskForEmployees?.company)
+                      .map((t: typeof allTasksData[0]) => {
                         const employee = allNewHires.find(h => h.name === t.assignee);
                         return employee ? { ...employee, taskStatus: t.status, taskDue: t.due } : null;
                       })
-                      .filter(e => e !== null);
+                      .filter((e: any) => e !== null);
 
                     if (assignedEmployees.length === 0) {
                       return (
@@ -2379,7 +2483,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                       );
                     }
 
-                    return assignedEmployees.map((employee, index) => (
+                    return assignedEmployees.map((employee: any, index: number) => (
                       <Card key={index} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
@@ -2868,6 +2972,7 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
               <TabsList>
                 <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
                 <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="unassigned">Unassigned</TabsTrigger>
               </TabsList>
             ) : (
               <TabsList>
@@ -3033,6 +3138,121 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                                   <CheckCircle className="w-4 h-4" />
                                 </Button>
                               )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                {/* Unassigned Tab */}
+                <TabsContent value="unassigned">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Due</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTasks
+                        .filter(task => task.assignedTo === "Unassigned")
+                        .map((task) => (
+                        <TableRow key={task.id}>
+                          <TableCell className="font-medium">{task.task}</TableCell>
+                          <TableCell>{task.assignee}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                              {task.due}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{task.type}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                task.stage === "Pre-Onboarding"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : task.stage === "1st Day-Onboarding"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-green-100 text-green-800"
+                              }
+                            >
+                              {task.stage}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip status={task.status} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedTaskForDetails(task);
+                                  setIsTaskDetailsDrawerOpen(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => handleAssignToSelf(task)}
+                              >
+                                Assign to Me
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  >
+                                    Assign to Team
+                                    <ChevronDown className="w-4 h-4 ml-1" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel>Select Role</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleAssignToOther(task, "HR Admin")}
+                                  >
+                                    HR Admin
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleAssignToOther(task, "HR Coordinator")}
+                                  >
+                                    HR Coordinator
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleAssignToOther(task, "IT/PIC")}
+                                  >
+                                    IT/PIC
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleAssignToOther(task, "Manager")}
+                                  >
+                                    Manager
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleAssignToOther(task, "Staff")}
+                                  >
+                                    Staff
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -3873,87 +4093,225 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                   )}
 
                   {/* Asset Details - for Asset type tasks */}
-                  {taskTemplate?.type === "asset" && (
-                    <div className="space-y-3">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <ClipboardList className="w-4 h-4" />
-                        Asset Details
-                      </h3>
+                  {taskTemplate?.type === "asset" && (() => {
+                    const isTaskOwner = currentUserRole === selectedTaskForDetails?.assignedTo;
+                    const assets = [
+                      {
+                        id: 1,
+                        title: "Laptop Computer",
+                        description: "Business laptop with Windows 11, Microsoft Office suite, and essential software pre-installed",
+                        serialNumber: "Dell-123123",
+                        assignedTo: "IT Admin",
+                        handoverLetter: {
+                          uploaded: true,
+                          signed: true
+                        }
+                      },
+                      {
+                        id: 2,
+                        title: "Employee ID Card",
+                        description: "Photo ID card with building access permissions and employee identification number",
+                        serialNumber: "EMP-2025-001234",
+                        assignedTo: "HR Admin",
+                        handoverLetter: {
+                          uploaded: true,
+                          signed: true
+                        }
+                      }
+                    ];
+
+                    return (
                       <div className="space-y-3">
-                        {[
-                          {
-                            id: 1,
-                            title: "Laptop Computer",
-                            description: "Business laptop with Windows 11, Microsoft Office suite, and essential software pre-installed",
-                            serialNumber: "Dell-123123",
-                            assignedTo: "IT Admin",
-                            handoverLetter: {
-                              uploaded: true,
-                              signed: true
-                            }
-                          },
-                          {
-                            id: 2,
-                            title: "Employee ID Card",
-                            description: "Photo ID card with building access permissions and employee identification number",
-                            serialNumber: "EMP-2025-001234",
-                            assignedTo: "HR Admin",
-                            handoverLetter: {
-                              uploaded: true,
-                              signed: true
-                            }
-                          }
-                        ].map((asset, index) => (
-                          <div
-                            key={asset.id}
-                            className="border rounded-lg p-4 bg-card"
-                          >
-                            <div className="flex items-center gap-2 mb-3">
-                              <span className="text-sm font-semibold text-gray-500 flex-shrink-0">#{index + 1}</span>
-                              <p className="font-medium text-sm">{asset.title}</p>
-                            </div>
-                            <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
-                              {asset.description}
-                            </p>
-                            <div className="space-y-2 mb-3">
-                              <div className="flex items-center gap-2">
-                                <Tag className="w-3 h-3 text-gray-500" />
-                                <span className="text-xs text-gray-500">Serial Number:</span>
-                                <span className="text-xs font-medium font-mono text-gray-900">{asset.serialNumber}</span>
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4" />
+                          Asset Details
+                        </h3>
+                        <div className="space-y-3">
+                          {assets.map((asset, index) => (
+                            <div
+                              key={asset.id}
+                              className="border rounded-lg p-4 bg-card"
+                            >
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-sm font-semibold text-gray-500 flex-shrink-0">#{index + 1}</span>
+                                <p className="font-medium text-sm">{asset.title}</p>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <User className="w-3 h-3 text-gray-500" />
-                                <span className="text-xs text-gray-500">Assigned to:</span>
-                                <span className="text-xs font-medium text-blue-600">{asset.assignedTo}</span>
-                              </div>
-                            </div>
-                            <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1.5">
-                                  <Check className="w-4 h-4 text-green-600" />
-                                  <span className="text-xs font-medium text-green-900">Upload Hand-over Letter</span>
+                              <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                {asset.description}
+                              </p>
+                              <div className="space-y-3 mb-3">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`serial-${asset.id}`} className="text-xs flex items-center gap-2">
+                                    <Tag className="w-3 h-3 text-gray-500" />
+                                    Serial Number
+                                  </Label>
+                                  {isTaskOwner ? (
+                                    <Input
+                                      id={`serial-${asset.id}`}
+                                      placeholder={`Enter serial number for ${asset.title}`}
+                                      value={assetSerialNumbers[asset.id] || ""}
+                                      onChange={(e) => setAssetSerialNumbers(prev => ({
+                                        ...prev,
+                                        [asset.id]: e.target.value
+                                      }))}
+                                      className="font-mono text-sm"
+                                    />
+                                  ) : (
+                                    <span className="text-sm font-medium font-mono text-gray-900 block pl-1">{asset.serialNumber}</span>
+                                  )}
                                 </div>
-                                {asset.handoverLetter.uploaded && asset.handoverLetter.signed && (
-                                  <div className="ml-auto flex items-center gap-1">
-                                    <span className="text-xs text-green-700">Uploaded & signed</span>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-5 w-5 p-0 text-green-600 hover:text-green-700"
-                                      title="View document"
-                                    >
-                                      <Eye className="w-3 h-3" />
-                                    </Button>
-                                  </div>
+
+                                <div className="flex items-center gap-2">
+                                  <User className="w-3 h-3 text-gray-500" />
+                                  <span className="text-xs text-gray-500">Assigned to:</span>
+                                  <span className="text-xs font-medium text-blue-600">{asset.assignedTo}</span>
+                                </div>
+                              </div>
+
+                              {/* Handover Letter Section */}
+                              <div className="border p-3 rounded-lg bg-gray-50 border-gray-200">
+                                {isTaskOwner ? (
+                                  <>
+                                    {/* For IT/PIC - Only show upload section */}
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                      <Upload className="w-4 h-4 text-gray-600" />
+                                      <span className="text-xs font-medium text-gray-900">
+                                        Hand-over Letter
+                                      </span>
+                                    </div>
+                                    <Input
+                                      type="file"
+                                      id={`handover-${asset.id}`}
+                                      accept=".pdf,.doc,.docx"
+                                      className="text-xs"
+                                      onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                          setHandoverLetterFiles(prev => ({
+                                            ...prev,
+                                            [asset.id]: e.target.files![0]
+                                          }));
+                                          toast.success("File Selected!", {
+                                            description: `Hand-over letter for ${asset.title} is ready to save`,
+                                            duration: 3000,
+                                          });
+                                        }
+                                      }}
+                                    />
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      Upload PDF or Word document
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    {/* For non-owners - Show upload status */}
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-1.5">
+                                        {asset.handoverLetter.uploaded ? (
+                                          <Check className="w-4 h-4 text-green-600" />
+                                        ) : (
+                                          <Upload className="w-4 h-4 text-gray-600" />
+                                        )}
+                                        <span className={`text-xs font-medium ${asset.handoverLetter.uploaded ? 'text-green-900' : 'text-gray-900'}`}>
+                                          Hand-over Letter
+                                        </span>
+                                      </div>
+                                      {asset.handoverLetter.uploaded && asset.handoverLetter.signed && (
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-xs text-green-700">Uploaded & signed</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 w-5 p-0 text-green-600 hover:text-green-700"
+                                            title="View document"
+                                          >
+                                            <Eye className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {!asset.handoverLetter.uploaded && (
+                                      <p className="text-xs text-gray-600 mt-1">Hand-over letter required</p>
+                                    )}
+                                  </>
                                 )}
                               </div>
-                              <p className="text-xs text-green-700 mt-1 pl-5">Hand-over letter required</p>
+
+                              {/* Remarks/Notes Section for Each Asset - Only for IT/PIC */}
+                              {isTaskOwner && (
+                                <div className="space-y-2 mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <Label htmlFor={`asset-remarks-${asset.id}`} className="text-xs font-semibold flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-blue-600" />
+                                    Remarks / Notes
+                                  </Label>
+                                  <Textarea
+                                    id={`asset-remarks-${asset.id}`}
+                                    placeholder={`Add remarks for ${asset.title} (e.g., condition, special instructions, issues encountered, etc.)`}
+                                    value={assetRemarks[asset.id] || ""}
+                                    onChange={(e) => setAssetRemarks(prev => ({
+                                      ...prev,
+                                      [asset.id]: e.target.value
+                                    }))}
+                                    className="min-h-[80px] text-sm"
+                                  />
+                                  <p className="text-xs text-blue-700">
+                                    Optional: Add any additional information about this asset
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Save Button for Each Asset - Only for IT/PIC */}
+                              {isTaskOwner && (
+                                <div className="mt-3 pt-3 border-t">
+                                  <Button
+                                    variant={savedAssets[asset.id] ? "outline" : "default"}
+                                    size="sm"
+                                    className={`w-full ${
+                                      savedAssets[asset.id]
+                                        ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100'
+                                        : ''
+                                    }`}
+                                    onClick={() => {
+                                      // Validate that serial number is entered
+                                      if (!assetSerialNumbers[asset.id] || assetSerialNumbers[asset.id].trim() === '') {
+                                        toast.error("Missing Serial Number", {
+                                          description: `Please enter serial number for ${asset.title}`,
+                                          duration: 3000,
+                                        });
+                                        return;
+                                      }
+
+                                      // Mark this asset as saved
+                                      setSavedAssets(prev => ({
+                                        ...prev,
+                                        [asset.id]: true
+                                      }));
+
+                                      toast.success("Asset Saved!", {
+                                        description: `${asset.title} details have been saved${handoverLetterFiles[asset.id] ? ' with handover letter' : ''}${assetRemarks[asset.id] ? ' with remarks' : ''}`,
+                                        duration: 3000,
+                                      });
+                                    }}
+                                  >
+                                    {savedAssets[asset.id] ? (
+                                      <>
+                                        <Check className="w-4 h-4 mr-2" />
+                                        Saved
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Settings className="w-4 h-4 mr-2" />
+                                        Save Asset
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Required Documents */}
                   {taskTemplate?.requiredDocuments && taskTemplate.requiredDocuments.length > 0 && (
@@ -4026,7 +4384,95 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
 
                   {/* Action Buttons */}
                   <div className="space-y-3 pt-4 border-t">
-                    {selectedTaskForDetails.status === "completed" ? (
+                    {selectedTaskForDetails.assignedTo === "Unassigned" ? (
+                      <>
+                        <div className="flex items-center gap-3">
+                          {/* Assign to Me Button */}
+                          <Button
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            onClick={() => {
+                              handleAssignToSelf(selectedTaskForDetails);
+                              setIsTaskDetailsDrawerOpen(false);
+                            }}
+                          >
+                            <User className="w-4 h-4 mr-2" />
+                            Assign to Me
+                          </Button>
+
+                          {/* Assign to Team Dropdown */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="flex-1"
+                              >
+                                Assign to Team
+                                <ChevronDown className="w-4 h-4 ml-2" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>Select Role</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  handleAssignToOther(selectedTaskForDetails, "HR Admin");
+                                  setIsTaskDetailsDrawerOpen(false);
+                                }}
+                              >
+                                HR Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  handleAssignToOther(selectedTaskForDetails, "HR Coordinator");
+                                  setIsTaskDetailsDrawerOpen(false);
+                                }}
+                              >
+                                HR Coordinator
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  handleAssignToOther(selectedTaskForDetails, "IT/PIC");
+                                  setIsTaskDetailsDrawerOpen(false);
+                                }}
+                              >
+                                IT/PIC
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  handleAssignToOther(selectedTaskForDetails, "Manager");
+                                  setIsTaskDetailsDrawerOpen(false);
+                                }}
+                              >
+                                Manager
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  handleAssignToOther(selectedTaskForDetails, "Staff");
+                                  setIsTaskDetailsDrawerOpen(false);
+                                }}
+                              >
+                                Staff
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        {/* Delete Button (separate row) */}
+                        <Button
+                          variant="outline"
+                          className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-600"
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete "${selectedTaskForDetails.task}"?`)) {
+                              alert('Task has been deleted');
+                              setIsTaskDetailsDrawerOpen(false);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </Button>
+                      </>
+                    ) : selectedTaskForDetails.status === "completed" ? (
                       <Button
                         variant="outline"
                         className="w-full"
@@ -4039,47 +4485,101 @@ export function OnboardingDashboard({ currentUserRole = "HR Admin" }: Onboarding
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Revert Mark as Completed
                       </Button>
-                    ) : (
-                      <>
-                        <Button
-                          className="w-full"
-                          onClick={() => {
-                            // Handle mark as complete
-                            alert('Task marked as complete');
-                            setSelectedTaskForDetails(null);
-                          }}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Mark as Complete
-                        </Button>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => {
-                              // Handle nudge/reminder
-                              alert('Reminder sent to assignee');
-                            }}
-                          >
-                            <Bell className="w-4 h-4 mr-2" />
-                            Nudge
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
-                            onClick={() => {
-                              if (window.confirm(`Are you sure you want to delete "${selectedTaskForDetails.task}"?`)) {
-                                alert('Task has been deleted');
-                                setSelectedTaskForDetails(null);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </div>
-                      </>
-                    )}
+                    ) : (() => {
+                      const taskTemplate = selectedTaskForDetails.templateId
+                        ? taskTemplates.find(t => t.id === selectedTaskForDetails.templateId)
+                        : null;
+                      const isTaskOwner = currentUserRole === selectedTaskForDetails.assignedTo;
+                      const isAssetTask = taskTemplate?.type === "asset";
+
+                      return (
+                        <>
+                          {/* For Asset Tasks assigned to IT/PIC - Show Save & Complete */}
+                          {isAssetTask && isTaskOwner ? (
+                            <>
+                              <Button
+                                className="w-full bg-green-600 hover:bg-green-700"
+                                onClick={() => {
+                                  // Validate serial numbers are entered
+                                  const hasSerialNumbers = Object.keys(assetSerialNumbers).length > 0;
+                                  if (!hasSerialNumbers) {
+                                    toast.error("Missing Information", {
+                                      description: "Please enter serial numbers for all assets before completing the task",
+                                      duration: 3000,
+                                    });
+                                    return;
+                                  }
+
+                                  toast.success("Task Completed!", {
+                                    description: `Asset task "${selectedTaskForDetails.task}" has been completed with all details saved`,
+                                    duration: 3000,
+                                  });
+                                  setIsTaskDetailsDrawerOpen(false);
+                                  setSelectedTaskForDetails(null);
+                                }}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Save & Complete Task
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => {
+                                  toast.success("Task Marked as Complete!", {
+                                    description: "This task has been marked as complete.",
+                                    duration: 3000,
+                                  });
+                                }}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Mark as Complete
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              {/* Standard Mark as Complete for non-asset tasks */}
+                              <Button
+                                className="w-full"
+                                onClick={() => {
+                                  // Handle mark as complete
+                                  alert('Task marked as complete');
+                                  setSelectedTaskForDetails(null);
+                                }}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Mark as Complete
+                              </Button>
+                              <div className="flex items-center gap-3">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    // Handle nudge/reminder
+                                    alert('Reminder sent to assignee');
+                                  }}
+                                >
+                                  <Bell className="w-4 h-4 mr-2" />
+                                  Nudge
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
+                                  onClick={() => {
+                                    if (window.confirm(`Are you sure you want to delete "${selectedTaskForDetails.task}"?`)) {
+                                      alert('Task has been deleted');
+                                      setSelectedTaskForDetails(null);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </>
