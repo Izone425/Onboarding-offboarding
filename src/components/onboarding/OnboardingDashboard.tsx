@@ -196,7 +196,7 @@ const allNewHires = [
     totalTasks: 12,
     progress: 33,
     status: "in-progress" as const,
-    currentStage: "Pre-Onboarding" as const,
+    currentStage: "1st Day-Onboarding" as const,
     company: "timetec-cloud"
   }
 ];
@@ -563,6 +563,19 @@ const allTasksData = [
     assignedTo: "Unassigned",
     stage: "1st Day-Onboarding" as const,
     company: "timetec-cloud"
+  },
+  {
+    id: 33,
+    task: "Laptop & ID Card",
+    assignee: "Jessica Wong",
+    due: "2025-09-28",
+    type: "Asset",
+    indicator: "Onboarding",
+    status: "pending" as const,
+    assignedTo: "Staff",
+    stage: "1st Day-Onboarding" as const,
+    company: "timetec-cloud",
+    templateId: "issue-assets"
   },
   {
     id: 28,
